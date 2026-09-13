@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "154847841204",
+    "project_id": "todohuy-flutter",
+    "storage_bucket": "todohuy-flutter.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:154847841204:android:28b101d1957d281f8680e1",
+        "android_client_info": {
+          "package_name": "com.example.todohuy"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "154847841204-11bfrrcbu37hhugdn52r9822i4l56kvh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.todohuy",
+            "certificate_hash": "482f9b5654fd49f12967443995458ceaf5116a78"
+          }
+        },
+        {
+          "client_id": "154847841204-mu69pm4mjen704pekfv23f0mp90es1eb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDuuFmu5GJg5_9C_hHAj9-qLpD_n8StQgk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "154847841204-mu69pm4mjen704pekfv23f0mp90es1eb.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "154847841204-b7tduiorkmh2aqjvaiqv3a8mn6kpftvq.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.todohuy"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

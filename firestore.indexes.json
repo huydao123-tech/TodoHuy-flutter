@@ -1,0 +1,21 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "task_groups",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "isArchived", "order": "ASCENDING" },
+        { "fieldPath": "displayOrder", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "work_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "weekStartDate", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

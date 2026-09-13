@@ -1,0 +1,88 @@
+name: CI/CD Build & Release APK
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Release APK & Publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java 21 LTS
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Setup Firebase configuration (google-services.json)
+        run: |
+          if [ -n "${{ secrets.GOOGLE_SERVICES_JSON }}" ]; then
+            echo "Restoring google-services.json from GitHub Secret..."
+            echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 --decode > android/app/google-services.json
+          elif [ -f "android/app/google-services.json" ]; then
+            echo "Using existing android/app/google-services.json from repository."
+          else
+            echo "ERROR: google-services.json not found in repository or secrets!"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze code (Linting)
+        run: flutter analyze lib test
+
+      - name: Run automated tests
+        run: flutter test
+
+      - name: Determine Release Tag and Version
+        id: get_version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //;s/+.*//' | tr -d '\r')
+          BUILD_NUM=$(grep '^version:' pubspec.yaml | sed 's/version: .*+//' | tr -d '\r')
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG_NAME="${{ github.ref_name }}"
+          else
+            TAG_NAME="v${VERSION}+${BUILD_NUM}.${{ github.run_number }}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tag_name=${TAG_NAME}" >> $GITHUB_OUTPUT
+          echo "Determined release tag: ${TAG_NAME}"
+
+      - name: Build Android Release APK
+        run: flutter build apk --release
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.get_version.outputs.tag_name }}
+          name: "TodoHuy Release ${{ steps.get_version.outputs.tag_name }}"
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+          make_latest: true
+          files: |
+            build/app/outputs/flutter-apk/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
