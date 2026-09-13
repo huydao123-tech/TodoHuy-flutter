@@ -25,7 +25,7 @@ class TodoHuyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'TodoHuy',
+      title: 'WeekLoop',
       routerConfig: goRouter,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(

@@ -188,7 +188,7 @@ class AppUpdater {
       int receivedBytes = 0;
 
       final tempDir = await getTemporaryDirectory();
-      final filePath = '${tempDir.path}/TodoHuy_update.apk';
+      final filePath = '${tempDir.path}/WeekLoop_update.apk';
       final file = File(filePath);
 
       if (await file.exists()) {
