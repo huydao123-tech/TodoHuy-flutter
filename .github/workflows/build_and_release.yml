@@ -51,7 +51,7 @@ jobs:
         run: flutter pub get
 
       - name: Analyze code (Linting)
-        run: flutter analyze lib test
+        run: flutter analyze
 
       - name: Run automated tests
         run: flutter test
