@@ -1,7 +1,7 @@
 name: todohuy
 description: A new Flutter project for TodoHuy.
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.1.0+3
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
@@ -36,6 +36,8 @@ dependencies:
 
 dev_dependencies:
   flutter_test:
+    sdk: flutter
+  integration_test:
     sdk: flutter
   flutter_lints: ^5.0.0
   mocktail: ^1.0.4

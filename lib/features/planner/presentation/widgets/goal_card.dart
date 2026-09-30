@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/data/auth_repository.dart';
@@ -26,6 +27,8 @@ class GoalCard extends ConsumerStatefulWidget {
 
 class _GoalCardState extends ConsumerState<GoalCard> {
   final _addController = TextEditingController();
+  final _addFocusNode = FocusNode();
+  final _addFieldKey = GlobalKey();
   bool _isAddingTask = false;
 
   Color get _groupColor {
@@ -60,8 +63,42 @@ class _GoalCardState extends ConsumerState<GoalCard> {
   }
 
   Future<void> _cycleStatus(String userId, WorkItemModel item) async {
+    HapticFeedback.lightImpact();
     final next = _nextStatus(item.status);
     await ref.read(plannerRepositoryProvider).updateWorkItemStatus(userId, item.id, next);
+  }
+
+  // DONE → TODO requires a long-press to avoid accidental un-completion.
+  void _onStatusTap(String userId, WorkItemModel item) {
+    if (item.status == WorkItemStatus.DONE) {
+      HapticFeedback.lightImpact();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nhấn giữ để đặt lại trạng thái'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    _cycleStatus(userId, item);
+  }
+
+  void _onStatusLongPress(String userId, WorkItemModel item) {
+    if (item.status == WorkItemStatus.DONE) {
+      _cycleStatus(userId, item);
+    }
+  }
+
+  void _focusAddField() {
+    _addFocusNode.requestFocus();
+    final ctx = _addFieldKey.currentContext;
+    if (ctx != null) {
+      Scrollable.ensureVisible(
+        ctx,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   Future<void> _addTask(String userId) async {
@@ -81,30 +118,40 @@ class _GoalCardState extends ConsumerState<GoalCard> {
     try {
       await ref.read(plannerRepositoryProvider).addWorkItem(userId, newItem);
       _addController.clear();
+      _addFocusNode.unfocus();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi: $e')),
+        );
       }
+    } finally {
+      if (mounted) setState(() => _isAddingTask = false);
     }
-    if (mounted) setState(() => _isAddingTask = false);
   }
 
   Future<void> _deleteTaskGroup(BuildContext context) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Xóa nhóm công việc?'),
-        content: const Text('Nhóm này sẽ được chuyển vào thùng rác và có thể khôi phục sau.'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Xóa nhóm công việc?', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+        content: Text('Nhóm "${widget.group.name}" sẽ được chuyển vào thùng rác.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hủy')),
           TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Hủy', style: TextStyle(color: AppColors.textMuted)),
+          ),
+          FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Xóa', style: TextStyle(color: Colors.red)),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Xóa'),
           ),
         ],
       ),
     );
-    if (confirm == true) {
+
+    if (confirm == true && mounted) {
       final user = ref.read(authRepositoryProvider).currentUser;
       if (user != null) {
         await ref.read(taskGroupRepositoryProvider).archiveTaskGroup(user.uid, widget.group.id);
@@ -115,6 +162,7 @@ class _GoalCardState extends ConsumerState<GoalCard> {
   @override
   void dispose() {
     _addController.dispose();
+    _addFocusNode.dispose();
     super.dispose();
   }
 
@@ -125,60 +173,54 @@ class _GoalCardState extends ConsumerState<GoalCard> {
 
     // Shared work items stream for this week
     final itemsAsync = ref.watch(workItemsForWeekProvider(widget.weekStartDate));
+    final allItems = itemsAsync.valueOrNull ?? const <WorkItemModel>[];
+    final groupItems = allItems.where((i) => i.taskGroupId == widget.group.id).toList();
+    final incompleteCount = groupItems.where((i) => i.status != WorkItemStatus.DONE).length;
 
-    return Opacity(
-      opacity: widget.isPast ? 0.65 : 1.0,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-          boxShadow: [
-            BoxShadow(
-              color: _groupColor.withValues(alpha: 0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border, width: 0.8),
+        boxShadow: const [AppColors.softShadow],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // ─── Card Header ───────────────────────────────────────────
+          _buildHeader(incompleteCount, groupItems.length),
+
+          const Divider(height: 1, color: AppColors.border),
+
+          // ─── Work Items List ────────────────────────────────────────
+          itemsAsync.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.all(20),
+              child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent)),
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // ─── Card Header ───────────────────────────────────────────
-            _buildHeader(),
-
-            const Divider(height: 1, color: AppColors.border),
-
-            // ─── Work Items List ────────────────────────────────────────
-            itemsAsync.when(
-              loading: () => const Padding(
-                padding: EdgeInsets.all(16),
-                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-              ),
-              error: (err, _) => Padding(
-                padding: const EdgeInsets.all(12),
-                child: Text('Lỗi: $err', style: const TextStyle(color: Colors.red)),
-              ),
-              data: (allItems) {
-                final items = allItems.where((i) => i.taskGroupId == widget.group.id).toList();
-                return _buildItemsList(user.uid, items);
-              },
+            error: (err, _) => Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text('Lỗi: $err', style: const TextStyle(color: Colors.red)),
             ),
+            data: (items) {
+              final currentGroupItems = items.where((i) => i.taskGroupId == widget.group.id).toList();
+              return _buildItemsList(user.uid, currentGroupItems);
+            },
+          ),
 
-            // ─── Add task input (disabled for past weeks) ───────────────
-            if (!widget.isPast) _buildAddTaskRow(user.uid),
-          ],
-        ),
+          // ─── Add task input (disabled for past weeks) ───────────────
+          if (!widget.isPast) _buildAddTaskRow(user.uid),
+        ],
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(int incompleteCount, int totalCount) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: _groupColor.withValues(alpha: 0.07),
+        color: _groupColor.withValues(alpha: widget.isPast ? 0.04 : 0.06),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
       ),
       child: Row(
@@ -189,6 +231,13 @@ class _GoalCardState extends ConsumerState<GoalCard> {
             decoration: BoxDecoration(
               color: _groupColor,
               shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: _groupColor.withValues(alpha: 0.4),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
             ),
           ),
           const SizedBox(width: 10),
@@ -199,27 +248,57 @@ class _GoalCardState extends ConsumerState<GoalCard> {
                 fontWeight: FontWeight.w700,
                 fontSize: 15,
                 color: _groupColor,
-                letterSpacing: 0.2,
+                letterSpacing: -0.2,
               ),
             ),
           ),
           if (widget.isPast)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: AppColors.bgAlt,
-                borderRadius: BorderRadius.circular(12),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: AppColors.border),
               ),
-              child: const Text('Tuần cũ', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+              child: const Text('Tuần cũ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textMuted)),
             )
-          else
+          else ...[
+            if (totalCount > 0)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.border.withValues(alpha: 0.6)),
+                ),
+                child: Text(
+                  incompleteCount == 0 ? '✓ Xong' : '$incompleteCount còn lại',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: incompleteCount == 0 ? AppColors.accent : _groupColor,
+                  ),
+                ),
+              ),
+            const SizedBox(width: 4),
+            IconButton(
+              icon: const Icon(Icons.add_rounded, size: 20, color: AppColors.accent),
+              tooltip: 'Thêm công việc',
+              visualDensity: VisualDensity.compact,
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.white,
+                padding: const EdgeInsets.all(6),
+                minimumSize: const Size(30, 30),
+              ),
+              onPressed: _focusAddField,
+            ),
             IconButton(
               icon: Icon(Icons.delete_outline, color: _groupColor.withValues(alpha: 0.7), size: 20),
               tooltip: 'Xóa nhóm',
               visualDensity: VisualDensity.compact,
               onPressed: () => _deleteTaskGroup(context),
             ),
+          ],
         ],
       ),
     );
@@ -228,7 +307,7 @@ class _GoalCardState extends ConsumerState<GoalCard> {
   Widget _buildItemsList(String userId, List<WorkItemModel> items) {
     if (items.isEmpty) {
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: Text(
           widget.isPast ? 'Không có công việc nào.' : 'Chưa có công việc nào. Thêm công việc bên dưới...',
           style: const TextStyle(color: AppColors.textFaint, fontSize: 13, fontStyle: FontStyle.italic),
@@ -241,19 +320,21 @@ class _GoalCardState extends ConsumerState<GoalCard> {
       physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(vertical: 4),
       itemCount: items.length,
-      separatorBuilder: (_, __) => const Divider(height: 1, indent: 48, color: AppColors.border),
+      separatorBuilder: (_, __) => const Divider(height: 1, indent: 48, color: AppColors.borderSubtle),
       itemBuilder: (context, idx) {
         final item = items[idx];
         final isDone = item.status == WorkItemStatus.DONE;
         return InkWell(
           onTap: () => _openDetailSheet(context, item),
+          splashColor: AppColors.accent.withValues(alpha: 0.06),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Row(
               children: [
                 // Status cycle button
                 GestureDetector(
-                  onTap: widget.isPast ? null : () => _cycleStatus(userId, item),
+                  onTap: widget.isPast ? null : () => _onStatusTap(userId, item),
+                  onLongPress: widget.isPast ? null : () => _onStatusLongPress(userId, item),
                   child: _statusIcon(item.status),
                 ),
                 const SizedBox(width: 12),
@@ -263,20 +344,22 @@ class _GoalCardState extends ConsumerState<GoalCard> {
                     item.content,
                     style: TextStyle(
                       fontSize: 14,
+                      fontWeight: isDone ? FontWeight.normal : FontWeight.w500,
                       color: isDone ? AppColors.textMuted : AppColors.text,
                       decoration: isDone ? TextDecoration.lineThrough : null,
                       decorationColor: AppColors.textMuted,
+                      height: 1.3,
                     ),
                   ),
                 ),
                 // Trailing: note indicator or chevron
                 if (item.note.isNotEmpty)
                   const Padding(
-                    padding: EdgeInsets.only(left: 8),
-                    child: Icon(Icons.notes, size: 16, color: AppColors.textFaint),
+                    padding: EdgeInsets.only(left: 6),
+                    child: Icon(Icons.sticky_note_2_outlined, size: 15, color: AppColors.textFaint),
                   ),
                 const SizedBox(width: 4),
-                const Icon(Icons.chevron_right, size: 18, color: AppColors.textFaint),
+                const Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.textFaint),
               ],
             ),
           ),
@@ -288,33 +371,46 @@ class _GoalCardState extends ConsumerState<GoalCard> {
   Widget _buildAddTaskRow(String userId) {
     return Container(
       decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.border)),
+        border: Border(top: BorderSide(color: AppColors.border, width: 0.8)),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       child: Row(
         children: [
-          const Icon(Icons.add, size: 20, color: AppColors.textFaint),
+          const Icon(Icons.add_rounded, size: 20, color: AppColors.textFaint),
           const SizedBox(width: 10),
           Expanded(
             child: TextField(
+              key: _addFieldKey,
               controller: _addController,
+              focusNode: _addFocusNode,
               style: const TextStyle(fontSize: 14, color: AppColors.text),
               decoration: const InputDecoration(
                 hintText: 'Thêm công việc...',
-                hintStyle: TextStyle(color: AppColors.textFaint, fontSize: 14),
+                hintStyle: TextStyle(color: AppColors.textFaint, fontSize: 13.5),
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                fillColor: Colors.transparent,
+                filled: false,
                 isDense: true,
-                contentPadding: EdgeInsets.zero,
+                contentPadding: EdgeInsets.symmetric(vertical: 8),
               ),
               onSubmitted: (_) => _isAddingTask ? null : _addTask(userId),
             ),
           ),
           if (_isAddingTask)
-            const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+            const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent))
           else
-            GestureDetector(
-              onTap: () => _addTask(userId),
-              child: const Icon(Icons.send_rounded, size: 18, color: AppColors.accent),
+            IconButton(
+              icon: const Icon(Icons.arrow_upward_rounded, size: 18, color: AppColors.accent),
+              tooltip: 'Thêm',
+              visualDensity: VisualDensity.compact,
+              style: IconButton.styleFrom(
+                backgroundColor: AppColors.accent.withValues(alpha: 0.1),
+                padding: const EdgeInsets.all(6),
+                minimumSize: const Size(28, 28),
+              ),
+              onPressed: () => _addTask(userId),
             ),
         ],
       ),

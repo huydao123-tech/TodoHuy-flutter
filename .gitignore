@@ -57,4 +57,7 @@ app.*.map.json
 # Nested projects
 todohuy-spring/
 
+# Local agent & tool directories
+.codewhale/
+.gemini/
 

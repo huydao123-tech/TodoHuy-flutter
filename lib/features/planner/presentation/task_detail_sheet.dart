@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/theme/app_colors.dart';
@@ -272,21 +273,78 @@ class _TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
     return Row(
       children: WorkItemStatus.values.map((status) {
         final isSelected = _selectedStatus == status;
-        final (label, icon, color) = switch (status) {
-          WorkItemStatus.TODO => ('Cần làm', Icons.radio_button_unchecked, AppColors.textMuted),
-          WorkItemStatus.IN_PROGRESS => ('Đang làm', Icons.hourglass_top_rounded, AppColors.groupColors[2]),
-          WorkItemStatus.DONE => ('Đã xong', Icons.check_circle, AppColors.accent),
+        final (label, color) = switch (status) {
+          WorkItemStatus.TODO => ('Cần làm', AppColors.textSecondary),
+          WorkItemStatus.IN_PROGRESS => ('Đang làm', AppColors.groupColors[2]),
+          WorkItemStatus.DONE => ('Đã xong', AppColors.accent),
         };
+
+        Widget statusIndicator;
+        switch (status) {
+          case WorkItemStatus.TODO:
+            statusIndicator = Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? color : const Color(0xFFCBD5E1),
+                  width: 1.8,
+                ),
+              ),
+            );
+            break;
+          case WorkItemStatus.IN_PROGRESS:
+            statusIndicator = Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFFF59E0B), width: 1.8),
+                color: const Color(0xFFFEF3C7),
+              ),
+              alignment: Alignment.center,
+              child: Container(
+                width: 6,
+                height: 6,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Color(0xFFF59E0B),
+                ),
+              ),
+            );
+            break;
+          case WorkItemStatus.DONE:
+            statusIndicator = Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isSelected ? AppColors.accent : const Color(0xFFE2E8F0),
+              ),
+              alignment: Alignment.center,
+              child: Icon(
+                Icons.check_rounded,
+                color: isSelected ? Colors.white : AppColors.textMuted,
+                size: 13,
+              ),
+            );
+            break;
+        }
+
         return Expanded(
           child: GestureDetector(
-            onTap: widget.isPast ? null : () => setState(() => _selectedStatus = status),
+            onTap: widget.isPast ? null : () {
+              HapticFeedback.selectionClick();
+              setState(() => _selectedStatus = status);
+            },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
               margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.symmetric(vertical: 10),
+              padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: isSelected ? color.withValues(alpha: 0.12) : AppColors.bgAlt,
-                borderRadius: BorderRadius.circular(10),
+                color: isSelected ? color.withValues(alpha: 0.1) : AppColors.bgAlt,
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isSelected ? color : AppColors.border,
                   width: isSelected ? 1.5 : 1,
@@ -295,13 +353,13 @@ class _TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(icon, size: 18, color: isSelected ? color : AppColors.textFaint),
-                  const SizedBox(height: 4),
+                  statusIndicator,
+                  const SizedBox(height: 6),
                   Text(
                     label,
                     style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
+                      fontSize: 12,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                       color: isSelected ? color : AppColors.textMuted,
                     ),
                     textAlign: TextAlign.center,

@@ -4,6 +4,13 @@ import '../../../core/theme/app_colors.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../task_groups/data/task_group_repository.dart';
 
+String _daysAgoLabel(DateTime? archivedAt) {
+  if (archivedAt == null) return 'Vừa xóa';
+  final days = DateTime.now().difference(archivedAt).inDays;
+  if (days <= 0) return 'Đã xóa hôm nay';
+  return 'Đã xóa $days ngày trước';
+}
+
 class TrashSheet extends ConsumerWidget {
   const TrashSheet({super.key});
 
@@ -53,6 +60,27 @@ class TrashSheet extends ConsumerWidget {
                       'Các nhóm đã xóa. Khôi phục hoặc xóa vĩnh viễn.',
                       style: TextStyle(fontSize: 12, color: AppColors.textMuted),
                     ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: AppColors.accent.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.accent.withValues(alpha: 0.2)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.info_outline, size: 16, color: AppColors.accent),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Các nhóm trong thùng rác sẽ bị xóa vĩnh viễn sau 30 ngày.',
+                              style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -94,7 +122,7 @@ class TrashSheet extends ConsumerWidget {
                           groupColor = AppColors.accent;
                         }
                         return ListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
                           leading: Container(
                             width: 10, height: 10,
                             decoration: BoxDecoration(color: groupColor, shape: BoxShape.circle),
@@ -102,13 +130,17 @@ class TrashSheet extends ConsumerWidget {
                           title: Text(
                             group.name,
                             style: const TextStyle(
-                                fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textMuted),
+                                fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.text),
+                          ),
+                          subtitle: Text(
+                            _daysAgoLabel(group.archivedAt),
+                            style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
                           ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              // Restore
-                              TextButton(
+                              // Restore (primary action)
+                              FilledButton(
                                 onPressed: () async {
                                   if (user != null) {
                                     await ref
@@ -120,9 +152,16 @@ class TrashSheet extends ConsumerWidget {
                                     }
                                   }
                                 },
-                                child: const Text('Khôi phục',
-                                    style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600)),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: AppColors.accent,
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                                ),
+                                child: const Text('Khôi phục'),
                               ),
+                              const SizedBox(width: 4),
                               // Permanent delete
                               IconButton(
                                 icon: const Icon(Icons.delete_forever, color: Colors.red, size: 20),

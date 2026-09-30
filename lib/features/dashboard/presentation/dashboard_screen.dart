@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
@@ -72,7 +73,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           content: Text(
             'Ứng dụng đang ở phiên bản mới nhất (${info.currentVersion.split("+").first})',
           ),
-          backgroundColor: Colors.green[700],
+          backgroundColor: AppColors.accent,
         ),
       );
     }
@@ -92,18 +93,32 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Widget _buildBottomNav() {
     return Container(
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.border)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: const Border(
+          top: BorderSide(color: AppColors.border, width: 0.8),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
       ),
       child: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
+        onTap: (index) {
+          HapticFeedback.selectionClick();
+          setState(() => _currentIndex = index);
+        },
         selectedItemColor: AppColors.accent,
         unselectedItemColor: AppColors.textMuted,
         backgroundColor: Colors.white,
+        elevation: 0,
         type: BottomNavigationBarType.fixed,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
-        unselectedLabelStyle: const TextStyle(fontSize: 12),
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5, letterSpacing: -0.2),
+        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11.5, letterSpacing: -0.2),
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_view_week_outlined),
@@ -126,66 +141,109 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   PreferredSizeWidget _buildAppBar() {
+    final user = ref.watch(authRepositoryProvider).currentUser;
+    final initial = (user?.displayName?.isNotEmpty == true
+        ? user!.displayName![0].toUpperCase()
+        : (user?.email?.isNotEmpty == true ? user!.email![0].toUpperCase() : 'W'));
+
+    String title;
+    String subtitle;
     switch (_currentIndex) {
       case 0:
-        return AppBar(
-          leading: Builder(
-            builder: (context) => IconButton(
-              icon: const Icon(Icons.menu),
-              color: AppColors.text,
-              onPressed: () => Scaffold.of(context).openDrawer(),
-            ),
-          ),
-          title: const Text(
-            'WeekLoop',
-            style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.text, fontSize: 20),
-          ),
-          backgroundColor: AppColors.bg,
-          elevation: 0,
-          surfaceTintColor: Colors.transparent,
-        );
+        title = 'WeekLoop';
+        subtitle = 'Kế hoạch theo tuần';
+        break;
       case 1:
-        return AppBar(
-          leading: Builder(
-            builder: (context) => IconButton(
-              icon: const Icon(Icons.menu),
-              color: AppColors.text,
-              onPressed: () => Scaffold.of(context).openDrawer(),
-            ),
-          ),
-          title: const Text(
-            'Đầu việc phụ',
-            style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.text),
-          ),
-          backgroundColor: AppColors.bg,
-          elevation: 0,
-          surfaceTintColor: Colors.transparent,
-        );
+        title = 'Đầu việc phụ';
+        subtitle = 'Ghi nhanh việc lặt vặt';
+        break;
       case 2:
       default:
-        return AppBar(
-          leading: Builder(
-            builder: (context) => IconButton(
-              icon: const Icon(Icons.menu),
+        title = 'Ghi chú';
+        subtitle = 'Ý tưởng & Tài liệu';
+        break;
+    }
+
+    return AppBar(
+      leading: Builder(
+        builder: (context) => IconButton(
+          icon: const Icon(Icons.menu),
+          color: AppColors.text,
+          tooltip: 'Menu',
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            Scaffold.of(context).openDrawer();
+          },
+        ),
+      ),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
               color: AppColors.text,
-              onPressed: () => Scaffold.of(context).openDrawer(),
+              fontSize: 19,
+              letterSpacing: -0.5,
             ),
           ),
-          title: const Text(
-            'Ghi chú',
-            style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.text),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textMuted,
+            ),
           ),
-          backgroundColor: AppColors.bg,
-          elevation: 0,
-          surfaceTintColor: Colors.transparent,
-        );
-    }
+        ],
+      ),
+      backgroundColor: AppColors.bg,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      actions: [
+        Builder(
+          builder: (context) => Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Center(
+              child: InkWell(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  Scaffold.of(context).openDrawer();
+                },
+                borderRadius: BorderRadius.circular(18),
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.accent.withValues(alpha: 0.2), width: 1.5),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    initial,
+                    style: const TextStyle(
+                      color: AppColors.accent,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildBody() {
     switch (_currentIndex) {
       case 0:
-        return const PlannerScreen();
+        return PlannerScreen(onAddGroup: _showAddGroupSheet);
       case 1:
         return const SidePanelTab();
       case 2:
@@ -200,11 +258,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         // On planner tab: FAB opens add-task sheet
         return FloatingActionButton(
           heroTag: 'planner-fab',
-          onPressed: () => _showAddTaskSheet(),
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            _showAddTaskSheet();
+          },
           backgroundColor: AppColors.accent,
           foregroundColor: Colors.white,
-          shape: const CircleBorder(),
-          child: const Icon(Icons.add),
+          elevation: 3,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: const Icon(Icons.add_rounded, size: 28),
         );
       case 1:
         return null;
@@ -212,11 +274,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       default:
         return FloatingActionButton(
           heroTag: 'notes-fab',
-          onPressed: () => _openNoteEditor(context),
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            _openNoteEditor(context);
+          },
           backgroundColor: AppColors.accent,
           foregroundColor: Colors.white,
-          shape: const CircleBorder(),
-          child: const Icon(Icons.edit_note),
+          elevation: 3,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: const Icon(Icons.edit_note, size: 28),
         );
     }
   }
@@ -258,7 +324,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final newName = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Sửa tên nhóm công việc'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Sửa tên nhóm công việc', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
         content: TextField(
           controller: controller,
           autofocus: true,
@@ -268,9 +335,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           onSubmitted: (val) => Navigator.pop(ctx, val.trim()),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
           TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Hủy', style: TextStyle(color: AppColors.textMuted)),
+          ),
+          FilledButton(
             onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
             child: const Text('Lưu'),
           ),
         ],
@@ -293,13 +364,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Xóa nhóm công việc?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Xóa nhóm công việc?', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
         content: Text('Nhóm "${group.name}" sẽ được chuyển vào thùng rác và có thể khôi phục sau.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hủy')),
           TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Hủy', style: TextStyle(color: AppColors.textMuted)),
+          ),
+          FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Xóa', style: TextStyle(color: Colors.red)),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Xóa'),
           ),
         ],
       ),
@@ -318,25 +394,44 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final taskGroupsAsync = ref.watch(taskGroupsProvider);
 
     return Drawer(
-      backgroundColor: AppColors.bg,
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ─── User Header ─────────────────────────────────────────
+            // ─── Linear Style User Profile Header ────────────────────
             Container(
-              color: AppColors.accent,
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: AppColors.border, width: 0.8)),
+              ),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor: Colors.white.withValues(alpha: 0.2),
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF16A34A), Color(0xFF0D9488)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.accent.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    alignment: Alignment.center,
                     child: Text(
                       (user?.displayName?.isNotEmpty == true
                           ? user!.displayName![0].toUpperCase()
                           : (user?.email?.isNotEmpty == true ? user!.email![0].toUpperCase() : 'U')),
-                      style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.w800),
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -345,15 +440,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          user?.displayName ?? 'User',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
+                          user?.displayName ?? 'Người dùng',
+                          style: const TextStyle(
+                            color: AppColors.text,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                            letterSpacing: -0.3,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
                         Text(
                           user?.email ?? '',
-                          style: const TextStyle(color: Colors.white70, fontSize: 12),
+                          style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -364,132 +464,189 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
             ),
 
-            // ─── Task Groups ──────────────────────────────────────────
+            // ─── Task Groups Section ──────────────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+              padding: const EdgeInsets.fromLTRB(18, 16, 12, 6),
               child: Row(
                 children: [
                   const Text(
                     'NHÓM CÔNG VIỆC',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textMuted, letterSpacing: 1),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textMuted,
+                      letterSpacing: 0.8,
+                    ),
                   ),
                   const Spacer(),
-                  GestureDetector(
-                    onTap: _showAddGroupSheet,
-                    child: const Icon(Icons.add, size: 20, color: AppColors.textMuted),
+                  IconButton(
+                    icon: const Icon(Icons.add_rounded, size: 20, color: AppColors.accent),
+                    tooltip: 'Tạo nhóm mới',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: _showAddGroupSheet,
                   ),
                 ],
               ),
             ),
-            taskGroupsAsync.when(
-              loading: () => const Padding(
-                padding: EdgeInsets.all(16),
-                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-              ),
-              error: (_, __) => const SizedBox.shrink(),
-              data: (groups) {
-                if (groups.isEmpty) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: GestureDetector(
-                      onTap: _showAddGroupSheet,
-                      child: const Text(
-                        '+ Thêm nhóm mới',
-                        style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  taskGroupsAsync.when(
+                    loading: () => const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                    ),
+                    error: (_, __) => const SizedBox.shrink(),
+                    data: (groups) {
+                      if (groups.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                          child: InkWell(
+                            onTap: _showAddGroupSheet,
+                            borderRadius: BorderRadius.circular(8),
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 8),
+                              child: Text(
+                                '+ Thêm nhóm đầu tiên',
+                                style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600, fontSize: 13),
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      return Column(
+                        children: groups.map((g) {
+                          Color groupColor;
+                          try {
+                            groupColor = Color(int.parse(g.color.replaceAll('#', '0xff')));
+                          } catch (_) {
+                            groupColor = AppColors.accent;
+                          }
+                          return ListTile(
+                            dense: true,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 0),
+                            leading: Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                color: groupColor,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: groupColor.withValues(alpha: 0.4),
+                                    blurRadius: 4,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            title: Text(
+                              g.name,
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.text),
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit_outlined, size: 16, color: AppColors.textFaint),
+                                  visualDensity: VisualDensity.compact,
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                                  tooltip: 'Sửa tên',
+                                  onPressed: () => _editTaskGroup(context, g),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.archive_outlined, size: 16, color: AppColors.textFaint),
+                                  visualDensity: VisualDensity.compact,
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                                  tooltip: 'Lưu trữ vào thùng rác',
+                                  onPressed: () => _deleteTaskGroup(context, g),
+                                ),
+                              ],
+                            ),
+                            onTap: () => Navigator.pop(context),
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
+
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Divider(color: AppColors.border, height: 1),
+                  ),
+
+                  // ─── Tools & Utilities ────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 8, 12, 6),
+                    child: const Text(
+                      'TIỆN ÍCH',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textMuted,
+                        letterSpacing: 0.8,
                       ),
                     ),
-                  );
-                }
-                return Column(
-                  children: groups.map((g) {
-                    Color groupColor;
-                    try {
-                      groupColor = Color(int.parse(g.color.replaceAll('#', '0xff')));
-                    } catch (_) {
-                      groupColor = AppColors.accent;
-                    }
-                    return ListTile(
-                      dense: true,
-                      contentPadding: const EdgeInsets.only(left: 16, right: 8),
-                      leading: Container(
-                        width: 10, height: 10,
-                        decoration: BoxDecoration(color: groupColor, shape: BoxShape.circle),
-                      ),
-                      title: Text(g.name, style: const TextStyle(fontSize: 14, color: AppColors.text)),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit_outlined, size: 18, color: AppColors.textMuted),
-                            visualDensity: VisualDensity.compact,
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                            tooltip: 'Sửa tên',
-                            onPressed: () => _editTaskGroup(context, g),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
-                            visualDensity: VisualDensity.compact,
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                            tooltip: 'Xóa nhóm',
-                            onPressed: () => _deleteTaskGroup(context, g),
-                          ),
-                        ],
-                      ),
-                      onTap: () => Navigator.pop(context),
-                    );
-                  }).toList(),
-                );
-              },
+                  ),
+                  ListTile(
+                    dense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 18),
+                    leading: const Icon(Icons.bookmark_border_rounded, color: AppColors.textSecondary, size: 20),
+                    title: const Text('Tài liệu & Link', style: TextStyle(color: AppColors.text, fontSize: 14, fontWeight: FontWeight.w500)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) => const ResourcesSheet(),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    dense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 18),
+                    leading: const Icon(Icons.delete_outline_rounded, color: AppColors.textSecondary, size: 20),
+                    title: const Text('Thùng rác', style: TextStyle(color: AppColors.text, fontSize: 14, fontWeight: FontWeight.w500)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) => const TrashSheet(),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    dense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 18),
+                    leading: const Icon(Icons.system_update_alt_rounded, color: AppColors.textSecondary, size: 20),
+                    title: const Text('Kiểm tra bản cập nhật', style: TextStyle(color: AppColors.text, fontSize: 14, fontWeight: FontWeight.w500)),
+                    onTap: () => _manualCheckUpdate(context),
+                  ),
+                ],
+              ),
             ),
 
-            const Divider(color: AppColors.border),
+            const Divider(color: AppColors.border, height: 1),
 
-            // ─── Resources & Trash ────────────────────────────────────
-            ListTile(
-              leading: const Icon(Icons.link, color: AppColors.textMuted, size: 22),
-              title: const Text('Tài liệu & Link', style: TextStyle(color: AppColors.text, fontSize: 14)),
-              onTap: () {
-                Navigator.pop(context);
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (_) => const ResourcesSheet(),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.delete_outline, color: AppColors.textMuted, size: 22),
-              title: const Text('Thùng rác', style: TextStyle(color: AppColors.text, fontSize: 14)),
-              onTap: () {
-                Navigator.pop(context);
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (_) => const TrashSheet(),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.system_update_alt_rounded, color: AppColors.textMuted, size: 22),
-              title: const Text('Kiểm tra bản cập nhật', style: TextStyle(color: AppColors.text, fontSize: 14)),
-              onTap: () => _manualCheckUpdate(context),
-            ),
-
-            const Spacer(),
-            const Divider(color: AppColors.border),
-
-            // ─── Logout ───────────────────────────────────────────────
-            ListTile(
-              leading: const Icon(Icons.logout, color: AppColors.textMuted, size: 22),
-              title: const Text('Đăng xuất', style: TextStyle(color: AppColors.text, fontSize: 14)),
-              onTap: () async {
-                await ref.read(authRepositoryProvider).signOut();
-                if (mounted) context.go('/login');
-              },
+            // ─── Logout & Version ─────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              child: ListTile(
+                dense: true,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                leading: const Icon(Icons.logout_rounded, color: Colors.redAccent, size: 20),
+                title: const Text('Đăng xuất', style: TextStyle(color: Colors.redAccent, fontSize: 14, fontWeight: FontWeight.w600)),
+                trailing: const Text('v1.0.0', style: TextStyle(color: AppColors.textFaint, fontSize: 11)),
+                onTap: () async {
+                  await ref.read(authRepositoryProvider).signOut();
+                  if (mounted) context.go('/login');
+                },
+              ),
             ),
           ],
         ),
@@ -657,7 +814,7 @@ class _AddTaskSheetState extends ConsumerState<_AddTaskSheet> {
                           color: AppColors.text)),
                   TextButton.icon(
                     onPressed: widget.onAddGroup,
-                    icon: const Icon(Icons.add, size: 16, color: AppColors.accent),
+                    icon: const Icon(Icons.add_rounded, size: 16, color: AppColors.accent),
                     label: const Text('Nhóm mới',
                         style: TextStyle(
                             fontSize: 13,
@@ -845,7 +1002,10 @@ class _AddGroupSheetState extends ConsumerState<_AddGroupSheet> {
             children: List.generate(_colors.length, (i) {
               final isSelected = _selectedColorIndex == i;
               return GestureDetector(
-                onTap: () => setState(() => _selectedColorIndex = i),
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  setState(() => _selectedColorIndex = i);
+                },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 160),
                   margin: const EdgeInsets.only(right: 12),
@@ -859,7 +1019,7 @@ class _AddGroupSheetState extends ConsumerState<_AddGroupSheet> {
                         ? [BoxShadow(color: _colors[i].withValues(alpha: 0.4), blurRadius: 8, offset: const Offset(0, 2))]
                         : [],
                   ),
-                  child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 16) : null,
+                  child: isSelected ? const Icon(Icons.check_rounded, color: Colors.white, size: 16) : null,
                 ),
               );
             }),

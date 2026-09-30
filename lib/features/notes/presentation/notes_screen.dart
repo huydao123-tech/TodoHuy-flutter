@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../data/notes_repository.dart';
 import '../data/note_model.dart';
 import 'note_editor_sheet.dart';
 
-// Color map: colorId → gradient colors
+// Color map: colorId → [background, border/accent]
 const _colorMap = {
-  'stone':  [Color(0xFFF5F5F4), Color(0xFFE7E5E4)],
-  'red':    [Color(0xFFFEE2E2), Color(0xFFFECACA)],
-  'orange': [Color(0xFFFFEDD5), Color(0xFFFED7AA)],
-  'yellow': [Color(0xFFFEF9C3), Color(0xFFFEF08A)],
-  'green':  [Color(0xFFDCFCE7), Color(0xFFBBF7D0)],
-  'blue':   [Color(0xFFDBEAFE), Color(0xFFBFDBFE)],
-  'violet': [Color(0xFFEDE9FE), Color(0xFFDDD6FE)],
-  'pink':   [Color(0xFFFCE7F3), Color(0xFFFBCFE8)],
+  'stone':  [Color(0xFFFAFAF9), Color(0xFFE7E5E4)],
+  'red':    [Color(0xFFFEF2F2), Color(0xFFFECACA)],
+  'orange': [Color(0xFFFFF7ED), Color(0xFFFED7AA)],
+  'yellow': [Color(0xFFFEFCE8), Color(0xFFFEF08A)],
+  'green':  [Color(0xFFF0FDF4), Color(0xFFBBF7D0)],
+  'blue':   [Color(0xFFEFF6FF), Color(0xFFBFDBFE)],
+  'violet': [Color(0xFFFAF5FF), Color(0xFFDDD6FE)],
+  'pink':   [Color(0xFFFDF2F8), Color(0xFFFBCFE8)],
 };
 
 const _categories = ['Tất cả', 'Ý tưởng', 'Công việc', 'Học tập', 'Cá nhân', 'Dự án'];
@@ -46,32 +48,39 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
 
     return Column(
       children: [
-        // ─── Search Bar ──────────────────────────────────────────────
+        // ─── Things 3 / Linear Search Bar ────────────────────────────
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-          child: TextField(
-            controller: _searchController,
-            onChanged: (v) => setState(() => _searchQuery = v.trim().toLowerCase()),
-            style: const TextStyle(fontSize: 14, color: AppColors.text),
-            decoration: InputDecoration(
-              hintText: 'Tìm kiếm ghi chú...',
-              hintStyle: const TextStyle(color: AppColors.textFaint, fontSize: 14),
-              prefixIcon: const Icon(Icons.search, color: AppColors.textFaint, size: 20),
-              suffixIcon: _searchQuery.isNotEmpty
-                  ? GestureDetector(
-                      onTap: () {
-                        _searchController.clear();
-                        setState(() => _searchQuery = '');
-                      },
-                      child: const Icon(Icons.close, color: AppColors.textFaint, size: 20),
-                    )
-                  : null,
-              fillColor: AppColors.bgAlt,
-              filled: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(24),
-                borderSide: BorderSide.none,
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border, width: 0.8),
+              boxShadow: const [AppColors.softShadow],
+            ),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (v) => setState(() => _searchQuery = v.trim().toLowerCase()),
+              style: const TextStyle(fontSize: 14, color: AppColors.text),
+              decoration: InputDecoration(
+                hintText: 'Tìm kiếm tiêu đề, nội dung ghi chú...',
+                hintStyle: const TextStyle(color: AppColors.textFaint, fontSize: 13.5),
+                prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textMuted, size: 20),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? GestureDetector(
+                        onTap: () {
+                          _searchController.clear();
+                          setState(() => _searchQuery = '');
+                        },
+                        child: const Icon(Icons.cancel_rounded, color: AppColors.textFaint, size: 18),
+                      )
+                    : null,
+                fillColor: Colors.transparent,
+                filled: false,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
               ),
             ),
           ),
@@ -91,14 +100,21 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
               return ChoiceChip(
                 label: Text(cat),
                 selected: isSelected,
-                onSelected: (_) => setState(() => _selectedCategory = cat),
+                onSelected: (_) {
+                  HapticFeedback.selectionClick();
+                  setState(() => _selectedCategory = cat);
+                },
                 selectedColor: AppColors.accent.withValues(alpha: 0.12),
-                backgroundColor: AppColors.bgAlt,
-                side: BorderSide(color: isSelected ? AppColors.accent : AppColors.border),
+                backgroundColor: Colors.white,
+                side: BorderSide(
+                  color: isSelected ? AppColors.accent : AppColors.border,
+                  width: isSelected ? 1.2 : 0.8,
+                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 labelStyle: TextStyle(
                   color: isSelected ? AppColors.accent : AppColors.textMuted,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
-                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  fontSize: 12.5,
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -106,13 +122,15 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             },
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
 
         // ─── Notes Grid ──────────────────────────────────────────────
         Expanded(
           child: notesAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, _) => Center(child: Text('Lỗi: $err')),
+            loading: () => const Center(
+              child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.accent),
+            ),
+            error: (err, _) => Center(child: Text('Lỗi: $err', style: const TextStyle(color: Colors.red))),
             data: (notes) {
               // Filter
               final filtered = notes.where((n) {
@@ -126,39 +144,41 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
 
               if (filtered.isEmpty) {
                 return Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.sticky_note_2_outlined,
-                          size: 52, color: AppColors.textFaint.withValues(alpha: 0.5)),
-                      const SizedBox(height: 16),
-                      Text(
-                        _searchQuery.isNotEmpty || _selectedCategory != 'Tất cả'
-                            ? 'Không tìm thấy ghi chú phù hợp.'
-                            : 'Chưa có ghi chú nào.\nNhấn + để tạo ghi chú đầu tiên.',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                            color: AppColors.textMuted, fontSize: 14, height: 1.5),
-                      ),
-                    ],
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 64,
+                          height: 64,
+                          decoration: BoxDecoration(
+                            color: AppColors.accent.withValues(alpha: 0.08),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.sticky_note_2_outlined,
+                              size: 32, color: AppColors.accent),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _searchQuery.isNotEmpty || _selectedCategory != 'Tất cả'
+                              ? 'Không tìm thấy ghi chú phù hợp.'
+                              : 'Chưa có ghi chú nào.\nNhấn + để tạo ghi chú đầu tiên.',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.text,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               }
 
-              return GridView.builder(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 0.82,
-                ),
-                itemCount: filtered.length,
-                itemBuilder: (context, i) => _NoteCard(
-                  note: filtered[i],
-                  onTap: () => _openEditor(context, note: filtered[i]),
-                ),
-              );
+              return _buildMasonryGrid(filtered);
             },
           ),
         ),
@@ -166,7 +186,58 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     );
   }
 
+  Widget _buildMasonryGrid(List<NoteModel> notes) {
+    final left = <NoteModel>[];
+    final right = <NoteModel>[];
+    double leftHeight = 0;
+    double rightHeight = 0;
+    for (final note in notes) {
+      final h = _estimateHeight(note);
+      if (leftHeight <= rightHeight) {
+        left.add(note);
+        leftHeight += h;
+      } else {
+        right.add(note);
+        rightHeight += h;
+      }
+    }
+
+    Widget column(List<NoteModel> items) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final note in items)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _NoteCard(note: note, onTap: () => _openEditor(context, note: note)),
+            ),
+        ],
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: column(left)),
+          const SizedBox(width: 12),
+          Expanded(child: column(right)),
+        ],
+      ),
+    );
+  }
+
+  double _estimateHeight(NoteModel note) {
+    double h = 36 + 24; // header + padding
+    if (note.title.isNotEmpty) h += 24;
+    h += (note.content.length / 22).ceil() * 16;
+    h += 24; // footer
+    return h;
+  }
+
   void _openEditor(BuildContext context, {NoteModel? note}) {
+    HapticFeedback.lightImpact();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -176,7 +247,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   }
 }
 
-// ─── Individual Note Card ──────────────────────────────────────────────────────
+// ─── Things 3 / Bear Style Individual Note Card ──────────────────────────────
 class _NoteCard extends StatelessWidget {
   final NoteModel note;
   final VoidCallback onTap;
@@ -186,90 +257,108 @@ class _NoteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = _colorsFor(note.colorId);
+    final dateStr = DateFormat('dd/MM').format(note.updatedAt);
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: colors[0],
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors[1], width: 1.2),
+        boxShadow: const [AppColors.softShadow],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: colors[1]),
-          boxShadow: [
-            BoxShadow(
-              color: colors[1].withValues(alpha: 0.6),
-              blurRadius: 6,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Cover gradient strip
-            Container(
-              height: 48,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [colors[1], colors[0]],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              ),
-              alignment: Alignment.center,
-              child: Text(note.icon, style: const TextStyle(fontSize: 24)),
-            ),
-
-            // Content
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          splashColor: colors[1].withValues(alpha: 0.3),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top Header: Emoji badge + Category pill
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    if (note.title.isNotEmpty) ...[
-                      Text(
-                        note.title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                          color: AppColors.text,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-                    ],
-                    Expanded(
-                      child: Text(
-                        note.content,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textMuted,
-                          height: 1.4,
-                        ),
-                        overflow: TextOverflow.fade,
-                        maxLines: 5,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    // Category badge
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      width: 32,
+                      height: 32,
                       decoration: BoxDecoration(
-                        color: colors[1],
+                        color: colors[0],
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: colors[1], width: 0.8),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(note.icon, style: const TextStyle(fontSize: 16)),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: colors[0],
                         borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: colors[1], width: 0.8),
                       ),
                       child: Text(
                         note.category,
-                        style: const TextStyle(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.w600),
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 10),
+
+                // Note Title
+                if (note.title.isNotEmpty) ...[
+                  Text(
+                    note.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14.5,
+                      color: AppColors.text,
+                      letterSpacing: -0.2,
+                      height: 1.3,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                ],
+
+                // Note Content preview
+                if (note.content.isNotEmpty)
+                  Text(
+                    note.content,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      color: AppColors.textSecondary,
+                      height: 1.4,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 6,
+                  ),
+
+                const SizedBox(height: 10),
+                // Card Footer: Date
+                Row(
+                  children: [
+                    const Icon(Icons.schedule_rounded, size: 12, color: AppColors.textFaint),
+                    const SizedBox(width: 4),
+                    Text(
+                      dateStr,
+                      style: const TextStyle(fontSize: 11, color: AppColors.textFaint, fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

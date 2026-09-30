@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../data/auth_repository.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/theme/app_colors.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -88,6 +90,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  void _goToForgotPassword() {
+    context.push('/forgot-password', extra: _emailController.text.trim());
+  }
+
   Future<void> _signInWithGoogle() async {
     setState(() => _isLoading = true);
     try {
@@ -122,52 +128,87 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Icon(Icons.check_circle_outline, size: 72, color: Color(0xFF16A34A)),
-                    const SizedBox(height: 12),
+                    Center(
+                      child: Container(
+                        width: 68,
+                        height: 68,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF16A34A), Color(0xFF0D9488)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.accent.withValues(alpha: 0.35),
+                              blurRadius: 16,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(Icons.check_rounded, size: 38, color: Colors.white),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
                     const Text(
-                      'TodoHuy',
+                      'WeekLoop',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.text,
+                        letterSpacing: -0.8,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       _isSignUp ? 'Tạo tài khoản mới để bắt đầu' : 'Kế hoạch tuần & Quản lý công việc',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 15, color: Colors.grey),
+                      style: const TextStyle(fontSize: 14, color: AppColors.textMuted),
                     ),
-                    const SizedBox(height: 36),
+                    const SizedBox(height: 32),
 
                     // Toggle Tab Đăng nhập / Đăng ký
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.grey.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
+                        color: AppColors.bgAlt,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.border, width: 0.8),
                       ),
                       padding: const EdgeInsets.all(4),
                       child: Row(
                         children: [
                           Expanded(
                             child: GestureDetector(
-                              onTap: _isLoading ? null : () => setState(() => _isSignUp = false),
-                              child: Container(
+                              onTap: _isLoading ? null : () {
+                                HapticFeedback.selectionClick();
+                                setState(() => _isSignUp = false);
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
                                 padding: const EdgeInsets.symmetric(vertical: 10),
                                 decoration: BoxDecoration(
-                                  color: !_isSignUp ? Theme.of(context).cardColor : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(8),
-                                  boxShadow: !_isSignUp ? [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.05),
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 2),
-                                    )
-                                  ] : null,
+                                  color: !_isSignUp ? Colors.white : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(10),
+                                  boxShadow: !_isSignUp
+                                      ? [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.05),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 1),
+                                          ),
+                                        ]
+                                      : null,
                                 ),
                                 child: Text(
                                   'Đăng Nhập',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
-                                    fontWeight: !_isSignUp ? FontWeight.bold : FontWeight.normal,
-                                    color: !_isSignUp ? const Color(0xFF16A34A) : Colors.grey,
+                                    fontWeight: !_isSignUp ? FontWeight.w700 : FontWeight.w500,
+                                    color: !_isSignUp ? AppColors.accent : AppColors.textMuted,
+                                    fontSize: 13.5,
                                   ),
                                 ),
                               ),
@@ -175,26 +216,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           Expanded(
                             child: GestureDetector(
-                              onTap: _isLoading ? null : () => setState(() => _isSignUp = true),
-                              child: Container(
+                              onTap: _isLoading ? null : () {
+                                HapticFeedback.selectionClick();
+                                setState(() => _isSignUp = true);
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
                                 padding: const EdgeInsets.symmetric(vertical: 10),
                                 decoration: BoxDecoration(
-                                  color: _isSignUp ? Theme.of(context).cardColor : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(8),
-                                  boxShadow: _isSignUp ? [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.05),
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 2),
-                                    )
-                                  ] : null,
+                                  color: _isSignUp ? Colors.white : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(10),
+                                  boxShadow: _isSignUp
+                                      ? [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.05),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 1),
+                                          ),
+                                        ]
+                                      : null,
                                 ),
                                 child: Text(
                                   'Đăng Ký',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
-                                    fontWeight: _isSignUp ? FontWeight.bold : FontWeight.normal,
-                                    color: _isSignUp ? const Color(0xFF16A34A) : Colors.grey,
+                                    fontWeight: _isSignUp ? FontWeight.w700 : FontWeight.w500,
+                                    color: _isSignUp ? AppColors.accent : AppColors.textMuted,
+                                    fontSize: 13.5,
                                   ),
                                 ),
                               ),
@@ -259,7 +307,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 16),
+                    if (!_isSignUp)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: _isLoading ? null : _goToForgotPassword,
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: const Size(0, 32),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Text(
+                            'Quên mật khẩu?',
+                            style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 12),
 
                     // Nhập lại mật khẩu (khi Đăng ký)
                     if (_isSignUp) ...[

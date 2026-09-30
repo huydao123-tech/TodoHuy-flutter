@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
@@ -8,7 +9,9 @@ import '../data/planner_repository.dart';
 import 'widgets/goal_card.dart';
 
 class WeekGridMobile extends ConsumerStatefulWidget {
-  const WeekGridMobile({super.key});
+  final VoidCallback? onAddGroup;
+
+  const WeekGridMobile({super.key, this.onAddGroup});
 
   @override
   ConsumerState<WeekGridMobile> createState() => _WeekGridMobileState();
@@ -16,8 +19,6 @@ class WeekGridMobile extends ConsumerStatefulWidget {
 
 class _WeekGridMobileState extends ConsumerState<WeekGridMobile> {
   late PageController _pageController;
-  // We keep an offset to track which page we're on.
-  // Page 1 = current week (center), 0 = prev week, 2 = next week.
   static const int _initialPage = 1;
   late int _currentPage;
 
@@ -42,6 +43,7 @@ class _WeekGridMobileState extends ConsumerState<WeekGridMobile> {
   void _navigatePage(int delta) {
     final target = _currentPage + delta;
     if (target < 0) return;
+    HapticFeedback.lightImpact();
     _pageController.animateToPage(
       target,
       duration: const Duration(milliseconds: 320),
@@ -57,14 +59,15 @@ class _WeekGridMobileState extends ConsumerState<WeekGridMobile> {
 
     return Column(
       children: [
-        // ─── Week Navigator Bar ─────────────────────────────────────────
+        // ─── Things 3 / Linear Week Navigator Bar ─────────────────────
         _buildWeekNavBar(baseWeek, today),
-        const Divider(height: 1, color: AppColors.border),
 
         // ─── PageView: 3 weeks ──────────────────────────────────────────
         Expanded(
           child: taskGroupsAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const Center(
+              child: CircularProgressIndicator(color: AppColors.accent, strokeWidth: 2.5),
+            ),
             error: (err, _) => Center(
               child: Text('Lỗi: $err', style: const TextStyle(color: Colors.red)),
             ),
@@ -73,7 +76,6 @@ class _WeekGridMobileState extends ConsumerState<WeekGridMobile> {
                 controller: _pageController,
                 onPageChanged: (page) {
                   final offset = page - _initialPage;
-                  // Update selectedWeek provider to match the displayed page
                   ref.read(selectedWeekProvider.notifier).state =
                       baseWeek.add(Duration(days: 7 * offset));
                   setState(() => _currentPage = page);
@@ -100,68 +102,104 @@ class _WeekGridMobileState extends ConsumerState<WeekGridMobile> {
     final isCurrentWeek = displayedWeek == today;
 
     return Container(
-      color: AppColors.bg,
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border, width: 0.8),
+        boxShadow: const [AppColors.softShadow],
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
             onPressed: () => _navigatePage(-1),
-            icon: const Icon(Icons.chevron_left, color: AppColors.textMuted),
+            icon: const Icon(Icons.chevron_left_rounded, color: AppColors.textSecondary, size: 22),
             tooltip: 'Tuần trước',
+            visualDensity: VisualDensity.compact,
+            style: IconButton.styleFrom(
+              backgroundColor: AppColors.bgAlt,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
           ),
-          GestureDetector(
+          InkWell(
             onTap: isCurrentWeek ? null : _goToCurrentWeek,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  isCurrentWeek ? 'Tuần này' : 'Tuần khác',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: isCurrentWeek ? AppColors.accent : AppColors.textMuted,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      weekStr,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.text,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: isCurrentWeek ? AppColors.accent : AppColors.textFaint,
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                    ),
-                    if (!isCurrentWeek) ...[
                       const SizedBox(width: 6),
-                      GestureDetector(
-                        onTap: _goToCurrentWeek,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.accent.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Text(
-                            'Về hôm nay',
-                            style: TextStyle(fontSize: 10, color: AppColors.accent, fontWeight: FontWeight.w600),
-                          ),
+                      Text(
+                        isCurrentWeek ? 'TUẦN HIỆN TẠI' : (displayedWeek.isBefore(today) ? 'TUẦN ĐÃ QUA' : 'TUẦN SẮP TỚI'),
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: isCurrentWeek ? AppColors.accent : AppColors.textMuted,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
                         ),
                       ),
                     ],
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        weekStr,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.text,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      if (!isCurrentWeek) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.accent.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            'Về hôm nay',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: AppColors.accent,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
           IconButton(
             onPressed: () => _navigatePage(1),
-            icon: const Icon(Icons.chevron_right, color: AppColors.textMuted),
+            icon: const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary, size: 22),
             tooltip: 'Tuần sau',
+            visualDensity: VisualDensity.compact,
+            style: IconButton.styleFrom(
+              backgroundColor: AppColors.bgAlt,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
           ),
         ],
       ),
@@ -171,23 +209,60 @@ class _WeekGridMobileState extends ConsumerState<WeekGridMobile> {
   Widget _buildWeekPage(List<TaskGroupModel> groups, String weekStr, bool isPast) {
     if (groups.isEmpty) {
       return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.folder_open_outlined, size: 52, color: AppColors.textFaint.withValues(alpha: 0.6)),
-            const SizedBox(height: 16),
-            const Text(
-              'Chưa có nhóm công việc nào.\nMở menu để thêm nhóm mới.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textMuted, fontSize: 14, height: 1.5),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: AppColors.accent.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.accent.withValues(alpha: 0.2)),
+                ),
+                child: const Icon(
+                  Icons.calendar_view_week_rounded,
+                  size: 36,
+                  color: AppColors.accent,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Chưa có nhóm công việc nào',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.text,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Tạo nhóm đầu tiên (như Công việc, Học tập, Dự án...) để bắt đầu lên kế hoạch tuần này.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.textMuted, fontSize: 13, height: 1.5),
+              ),
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: widget.onAddGroup,
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: const Text('Tạo nhóm đầu tiên', style: TextStyle(fontWeight: FontWeight.w600)),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100), // Bottom padding for FAB
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
       itemCount: groups.length,
       itemBuilder: (context, index) {
         final group = groups[index];
@@ -212,7 +287,7 @@ class _WeekGridMobileState extends ConsumerState<WeekGridMobile> {
   }
 
   void _goToCurrentWeek() {
-    // Jump back to page 1 (current week)
+    HapticFeedback.lightImpact();
     _pageController.animateToPage(
       _initialPage,
       duration: const Duration(milliseconds: 350),

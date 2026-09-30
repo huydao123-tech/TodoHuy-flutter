@@ -33,11 +33,11 @@ class SideTasksRepository {
         });
   }
 
-  Future<void> addSideTask(String userId, String name) async {
+  Future<void> addSideTask(String userId, String name, {bool isDone = false}) async {
     final task = SideTaskModel(
       id: '',
       name: name,
-      isDone: false,
+      isDone: isDone,
       createdAt: DateTime.now(),
     );
     await _firestore

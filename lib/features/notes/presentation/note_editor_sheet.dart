@@ -102,35 +102,34 @@ class _NoteEditorSheetState extends ConsumerState<NoteEditorSheet> {
   }
 
   Future<void> _delete() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Xóa ghi chú?'),
-        content: const Text('Ghi chú này sẽ bị xóa vĩnh viễn.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hủy')),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Xóa', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-    if (confirm != true) return;
+    final note = widget.note;
+    if (note == null) return;
+    final user = ref.read(authRepositoryProvider).currentUser;
+    if (user == null) return;
 
     setState(() => _isDeleting = true);
-    final user = ref.read(authRepositoryProvider).currentUser;
-    if (user != null) {
-      try {
-        await ref.read(notesRepositoryProvider).deleteNote(user.uid, widget.note!.id);
-        if (mounted) Navigator.pop(context);
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
-        }
+    try {
+      await ref.read(notesRepositoryProvider).deleteNote(user.uid, note.id);
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Đã xóa "${note.title.isEmpty ? 'Ghi chú' : note.title}"'),
+          duration: const Duration(seconds: 5),
+          action: SnackBarAction(
+            label: 'HOÀN TÁC',
+            onPressed: () {
+              ref.read(notesRepositoryProvider).addNote(user.uid, note);
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isDeleting = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
       }
     }
-    if (mounted) setState(() => _isDeleting = false);
   }
 
   @override

@@ -9,6 +9,7 @@ class TaskGroupModel {
   final String color;
   final int displayOrder;
   final bool isArchived;
+  final DateTime? archivedAt;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -19,6 +20,7 @@ class TaskGroupModel {
     required this.color,
     required this.displayOrder,
     required this.isArchived,
+    this.archivedAt,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -32,6 +34,7 @@ class TaskGroupModel {
       color: data['color'] ?? '#16A34A',
       displayOrder: data['displayOrder'] ?? 0,
       isArchived: data['isArchived'] ?? false,
+      archivedAt: (data['archivedAt'] as Timestamp?)?.toDate(),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
@@ -44,6 +47,7 @@ class TaskGroupModel {
       'color': color,
       'displayOrder': displayOrder,
       'isArchived': isArchived,
+      'archivedAt': archivedAt == null ? null : Timestamp.fromDate(archivedAt!),
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };

@@ -79,11 +79,17 @@ class TaskGroupRepository {
   }
 
   Future<void> archiveTaskGroup(String userId, String groupId) async {
-    await updateTaskGroup(userId, groupId, {'isArchived': true});
+    await updateTaskGroup(userId, groupId, {
+      'isArchived': true,
+      'archivedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   Future<void> restoreTaskGroup(String userId, String groupId) async {
-    await updateTaskGroup(userId, groupId, {'isArchived': false});
+    await updateTaskGroup(userId, groupId, {
+      'isArchived': false,
+      'archivedAt': null,
+    });
   }
 
   Future<void> permanentDeleteTaskGroup(String userId, String groupId) async {

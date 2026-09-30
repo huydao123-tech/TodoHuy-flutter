@@ -147,25 +147,28 @@ class _ResourceTile extends ConsumerWidget {
         color: Colors.red.shade400,
         child: const Icon(Icons.delete, color: Colors.white),
       ),
-      confirmDismiss: (_) async {
-        return await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Xóa tài liệu?'),
-            content: Text('Xóa "${resource.title}"?'),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hủy')),
-              TextButton(
-                  onPressed: () => Navigator.pop(ctx, true),
-                  child: const Text('Xóa', style: TextStyle(color: Colors.red))),
-            ],
-          ),
-        );
-      },
       onDismissed: (_) {
         final user = ref.read(authRepositoryProvider).currentUser;
         if (user != null) {
           ref.read(resourcesRepositoryProvider).deleteResource(user.uid, resource.id);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Đã xóa "${resource.title}"'),
+              duration: const Duration(seconds: 5),
+              action: SnackBarAction(
+                label: 'HOÀN TÁC',
+                onPressed: () {
+                  ref.read(resourcesRepositoryProvider).addResource(
+                        user.uid,
+                        resource.title,
+                        resource.link,
+                        resource.description,
+                        resource.taskGroupId,
+                      );
+                },
+              ),
+            ),
+          );
         }
       },
       child: ListTile(
@@ -318,12 +321,6 @@ class _AddResourceSheetState extends ConsumerState<_AddResourceSheet> {
               decoration: _fieldDecor('https://...', icon: Icons.link),
             ),
             const SizedBox(height: 12),
-            TextField(
-              controller: _descController,
-              maxLines: 2,
-              decoration: _fieldDecor('Mô tả ngắn (tuỳ chọn)...', icon: Icons.notes_outlined),
-            ),
-            const SizedBox(height: 12),
 
             // TaskGroup selector
             taskGroupsAsync.when(
@@ -344,6 +341,12 @@ class _AddResourceSheetState extends ConsumerState<_AddResourceSheet> {
                   onChanged: (val) => setState(() => _selectedGroupId = val),
                 );
               },
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _descController,
+              maxLines: 2,
+              decoration: _fieldDecor('Mô tả ngắn (tuỳ chọn)...', icon: Icons.notes_outlined),
             ),
             const SizedBox(height: 24),
             FilledButton(

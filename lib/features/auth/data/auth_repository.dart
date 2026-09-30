@@ -89,6 +89,10 @@ class AuthRepository {
     await _auth.signInWithEmailAndPassword(email: email, password: password);
   }
 
+  Future<void> sendPasswordResetEmail(String email) async {
+    await _auth.sendPasswordResetEmail(email: email);
+  }
+
   Future<void> signUpWithEmail(String email, String password, String fullName) async {
     final credential = await _auth.createUserWithEmailAndPassword(
       email: email,

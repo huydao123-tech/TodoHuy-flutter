@@ -4,10 +4,12 @@ import 'week_grid_mobile.dart';
 /// PlannerScreen is now just a thin wrapper around WeekGridMobile.
 /// Navigation (AppBar, FAB) is handled by DashboardScreen.
 class PlannerScreen extends StatelessWidget {
-  const PlannerScreen({super.key});
+  final VoidCallback? onAddGroup;
+
+  const PlannerScreen({super.key, this.onAddGroup});
 
   @override
   Widget build(BuildContext context) {
-    return const WeekGridMobile();
+    return WeekGridMobile(onAddGroup: onAddGroup);
   }
 }
