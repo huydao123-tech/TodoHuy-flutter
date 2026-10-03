@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../auth/data/auth_repository.dart';
 import '../data/notes_repository.dart';
 import '../data/note_model.dart';
@@ -134,22 +136,31 @@ class _NoteEditorSheetState extends ConsumerState<NoteEditorSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    return Container(
-      decoration: BoxDecoration(
-        color: _currentColors[0],
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+    final l10n = context.l10n;
+    final mediaQuery = MediaQuery.of(context);
+    final bottomInset = mediaQuery.viewInsets.bottom;
+    final screenHeight = mediaQuery.size.height;
+
+    return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
-      child: DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.9,
-        minChildSize: 0.5,
-        maxChildSize: 0.97,
-        builder: (context, scrollController) {
-          return Column(
+      child: Container(
+        height: screenHeight * 0.88,
+        decoration: BoxDecoration(
+          color: _currentColors[0],
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 20,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          child: Column(
             children: [
-              // ─── Drag handle + cover color row ───────────────────
+              // ─── Header: Drag Handle + Cover Color Palette ─────────────────
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -157,21 +168,21 @@ class _NoteEditorSheetState extends ConsumerState<NoteEditorSheet> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                   ),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                 ),
                 child: Column(
                   children: [
                     const SizedBox(height: 12),
                     Center(
                       child: Container(
-                        width: 36, height: 4,
+                        width: 36,
+                        height: 4,
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.15),
+                          color: Colors.black.withValues(alpha: 0.18),
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
                     ),
-                    // Color selector
+                    // Color selector row
                     SizedBox(
                       height: 44,
                       child: ListView.builder(
@@ -183,21 +194,24 @@ class _NoteEditorSheetState extends ConsumerState<NoteEditorSheet> {
                           final colors = _coverColors[key]!;
                           final isSelected = key == _selectedColorKey;
                           return GestureDetector(
-                            onTap: () => setState(() => _selectedColorKey = key),
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              setState(() => _selectedColorKey = key);
+                            },
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 150),
-                              margin: const EdgeInsets.only(right: 8),
-                              width: isSelected ? 30 : 24,
-                              height: isSelected ? 30 : 24,
+                              margin: const EdgeInsets.only(right: 10),
+                              width: isSelected ? 28 : 22,
+                              height: isSelected ? 28 : 22,
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(colors: [colors[0], colors[1]]),
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: isSelected ? AppColors.text : Colors.transparent,
-                                  width: 2,
+                                  color: isSelected ? AppColors.text : Colors.white,
+                                  width: isSelected ? 2.2 : 1.2,
                                 ),
                                 boxShadow: isSelected
-                                    ? [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 4)]
+                                    ? [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)]
                                     : [],
                               ),
                             ),
@@ -209,152 +223,218 @@ class _NoteEditorSheetState extends ConsumerState<NoteEditorSheet> {
                 ),
               ),
 
-              // ─── Scrollable content ───────────────────────────────
-              Expanded(
-                child: ListView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              // ─── Metadata Bar: Icon Button + Category Selector Chips ───────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+                child: Row(
                   children: [
-                    // Icon row
-                    Row(
-                      children: [
-                        // Big icon display
-                        GestureDetector(
-                          onTap: () => _showIconPicker(),
-                          child: Container(
-                            width: 56,
-                            height: 56,
-                            decoration: BoxDecoration(
-                              color: _currentColors[1].withValues(alpha: 0.6),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(_selectedIcon, style: const TextStyle(fontSize: 30)),
-                          ),
+                    // Icon Picker Button
+                    InkWell(
+                      onTap: _showIconPicker,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: _currentColors[1], width: 1.2),
+                          boxShadow: const [AppColors.softShadow],
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('Danh mục', style: TextStyle(fontSize: 11, color: AppColors.textMuted, fontWeight: FontWeight.w600)),
-                              const SizedBox(height: 4),
-                              _buildCategoryRow(),
-                            ],
-                          ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(_selectedIcon, style: const TextStyle(fontSize: 20)),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.arrow_drop_down_rounded, size: 18, color: AppColors.textMuted),
+                          ],
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Title
-                    TextField(
-                      controller: _titleController,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.text,
-                        height: 1.3,
                       ),
-                      decoration: const InputDecoration(
-                        hintText: 'Tiêu đề ghi chú...',
-                        hintStyle: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textFaint),
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      maxLines: null,
-                      textInputAction: TextInputAction.next,
                     ),
-                    const SizedBox(height: 12),
-
-                    // Content
-                    TextField(
-                      controller: _contentController,
-                      style: const TextStyle(fontSize: 15, color: AppColors.text, height: 1.6),
-                      decoration: const InputDecoration(
-                        hintText: 'Bắt đầu viết...',
-                        hintStyle: TextStyle(fontSize: 15, color: AppColors.textFaint, height: 1.6),
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: EdgeInsets.zero,
+                    const SizedBox(width: 10),
+                    // Categories horizontal list
+                    Expanded(
+                      child: SizedBox(
+                        height: 36,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _categories.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 6),
+                          itemBuilder: (context, i) {
+                            final cat = _categories[i];
+                            final isSelected = _selectedCategory == cat;
+                            return ChoiceChip(
+                              label: Text(cat),
+                              selected: isSelected,
+                              onSelected: (_) {
+                                HapticFeedback.selectionClick();
+                                setState(() => _selectedCategory = cat);
+                              },
+                              selectedColor: AppColors.accent,
+                              backgroundColor: Colors.white,
+                              side: BorderSide(
+                                color: isSelected ? AppColors.accent : _currentColors[1],
+                                width: 1,
+                              ),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              labelStyle: TextStyle(
+                                color: isSelected ? Colors.white : AppColors.textSecondary,
+                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                fontSize: 12,
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            );
+                          },
+                        ),
                       ),
-                      maxLines: null,
-                      minLines: 8,
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Action buttons
-                    Row(
-                      children: [
-                        if (_isEditing)
-                          OutlinedButton.icon(
-                            onPressed: _isDeleting ? null : _delete,
-                            icon: _isDeleting
-                                ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
-                                : const Icon(Icons.delete_outline, size: 18),
-                            label: const Text('Xóa'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.red.shade700,
-                              side: BorderSide(color: Colors.red.shade200),
-                            ),
-                          ),
-                        const Spacer(),
-                        OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Hủy'),
-                        ),
-                        const SizedBox(width: 12),
-                        FilledButton.icon(
-                          onPressed: _isSaving ? null : _save,
-                          icon: _isSaving
-                              ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                              : const Icon(Icons.save_outlined, size: 18),
-                          label: Text(_isEditing ? 'Cập nhật' : 'Tạo ghi chú'),
-                          style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
-                        ),
-                      ],
                     ),
                   ],
                 ),
               ),
-            ],
-          );
-        },
-      ),
-    );
-  }
 
-  Widget _buildCategoryRow() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: _categories.map((cat) {
-          final isSelected = _selectedCategory == cat;
-          return GestureDetector(
-            onTap: () => setState(() => _selectedCategory = cat),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 130),
-              margin: const EdgeInsets.only(right: 6),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.accent : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isSelected ? AppColors.accent : AppColors.border,
+              // ─── Scrollable Note Content (Title + Divider + Content) ───────
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Note Title TextField (Clean borderless, no clipping!)
+                      TextField(
+                        controller: _titleController,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.text,
+                          letterSpacing: -0.3,
+                          height: 1.3,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: l10n.isVietnamese ? 'Tiêu đề ghi chú...' : 'Note title...',
+                          hintStyle: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textFaint.withValues(alpha: 0.7),
+                            letterSpacing: -0.3,
+                          ),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          errorBorder: InputBorder.none,
+                          disabledBorder: InputBorder.none,
+                          filled: false,
+                          fillColor: Colors.transparent,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                        ),
+                        maxLines: null,
+                        textInputAction: TextInputAction.next,
+                      ),
+                      const SizedBox(height: 2),
+                      Divider(
+                        color: _currentColors[1].withValues(alpha: 0.9),
+                        thickness: 1,
+                        height: 14,
+                      ),
+                      const SizedBox(height: 2),
+                      // Note Body TextField
+                      TextField(
+                        controller: _contentController,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: AppColors.text,
+                          height: 1.6,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: l10n.isVietnamese ? 'Bắt đầu viết...' : 'Start writing...',
+                          hintStyle: TextStyle(
+                            fontSize: 15,
+                            color: AppColors.textFaint.withValues(alpha: 0.7),
+                            height: 1.6,
+                          ),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          errorBorder: InputBorder.none,
+                          disabledBorder: InputBorder.none,
+                          filled: false,
+                          fillColor: Colors.transparent,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 6),
+                        ),
+                        maxLines: null,
+                        minLines: 8,
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 ),
               ),
-              child: Text(
-                cat,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isSelected ? Colors.white : AppColors.textMuted,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
+
+              // ─── Fixed Bottom Action Dock ─────────────────────────────────
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(top: BorderSide(color: _currentColors[1], width: 0.9)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: Row(
+                    children: [
+                      if (_isEditing)
+                        OutlinedButton.icon(
+                          onPressed: _isDeleting ? null : _delete,
+                          icon: _isDeleting
+                              ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.red))
+                              : const Icon(Icons.delete_outline_rounded, size: 18),
+                          label: Text(l10n.isVietnamese ? 'Xóa' : 'Delete'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.red.shade700,
+                            side: BorderSide(color: Colors.red.shade200),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      const Spacer(),
+                      OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.textSecondary,
+                          side: const BorderSide(color: AppColors.border),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: Text(l10n.cancel),
+                      ),
+                      const SizedBox(width: 10),
+                      FilledButton.icon(
+                        onPressed: _isSaving ? null : _save,
+                        icon: _isSaving
+                            ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            : const Icon(Icons.check_rounded, size: 18),
+                        label: Text(_isEditing
+                            ? (l10n.isVietnamese ? 'Cập nhật' : 'Update')
+                            : (l10n.isVietnamese ? 'Tạo ghi chú' : 'Create Note')),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.accent,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        }).toList(),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -362,46 +442,60 @@ class _NoteEditorSheetState extends ConsumerState<NoteEditorSheet> {
   void _showIconPicker() {
     showModalBottomSheet(
       context: context,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Chọn biểu tượng', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.text)),
-            const SizedBox(height: 16),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 6,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                context.l10n.isVietnamese ? 'Chọn biểu tượng' : 'Choose Icon',
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.text),
               ),
-              itemCount: _icons.length,
-              itemBuilder: (_, i) {
-                final icon = _icons[i];
-                final isSelected = icon == _selectedIcon;
-                return GestureDetector(
-                  onTap: () {
-                    setState(() => _selectedIcon = icon);
-                    Navigator.pop(ctx);
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: isSelected ? AppColors.accent.withValues(alpha: 0.1) : AppColors.bgAlt,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: isSelected ? AppColors.accent : AppColors.border),
+              const SizedBox(height: 16),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 6,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                ),
+                itemCount: _icons.length,
+                itemBuilder: (_, i) {
+                  final icon = _icons[i];
+                  final isSelected = icon == _selectedIcon;
+                  return GestureDetector(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      setState(() => _selectedIcon = icon);
+                      Navigator.pop(ctx);
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: isSelected ? AppColors.accent.withValues(alpha: 0.12) : AppColors.bgAlt,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected ? AppColors.accent : AppColors.border,
+                          width: isSelected ? 1.5 : 1,
+                        ),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(icon, style: const TextStyle(fontSize: 24)),
                     ),
-                    alignment: Alignment.center,
-                    child: Text(icon, style: const TextStyle(fontSize: 24)),
-                  ),
-                );
-              },
-            ),
-          ],
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
+

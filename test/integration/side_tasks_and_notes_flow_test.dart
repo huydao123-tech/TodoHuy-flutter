@@ -64,19 +64,13 @@ void main() {
       // Verify new task added
       expect(find.text('Chuẩn bị tài liệu demo'), findsOneWidget);
 
-      // Toggle checkbox of the first task
+      // Toggle checkbox of the first task: triggers auto-complete and deletion
       final checkboxes = find.byType(Checkbox);
       expect(checkboxes, findsWidgets);
       await tester.tap(checkboxes.first);
+      await tester.pump(const Duration(milliseconds: 400));
       await tester.pumpAndSettle();
 
-      // Filter chips test: tap 'Đã xong'
-      await tester.tap(find.text('Đã xong'));
-      await tester.pumpAndSettle();
-
-      // Tap 'Tất cả'
-      await tester.tap(find.text('Tất cả'));
-      await tester.pumpAndSettle();
 
       // ─── Part 2: Notes (Ghi chú) Flow ──────────────────────────────
       // Switch to Tab 2 (Ghi chú)

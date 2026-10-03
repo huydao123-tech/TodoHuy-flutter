@@ -25,6 +25,47 @@ class _SideTasksScreenState extends ConsumerState<SideTasksScreen> {
     }
   }
 
+  final Set<String> _completingTaskIds = {};
+
+  void _completeAndRemoveTask(String userId, String taskId, String taskName) {
+    if (_completingTaskIds.contains(taskId)) return;
+
+    setState(() {
+      _completingTaskIds.add(taskId);
+    });
+
+    Future.delayed(const Duration(milliseconds: 350), () async {
+      if (!mounted) return;
+      await ref.read(sideTasksRepositoryProvider).deleteSideTask(userId, taskId);
+      _completingTaskIds.remove(taskId);
+
+      if (mounted) {
+        final l10n = context.l10n;
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              l10n.isVietnamese
+                  ? 'Đã hoàn thành và xóa "$taskName"'
+                  : 'Completed & deleted "$taskName"',
+            ),
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: l10n.isVietnamese ? 'HOÀN TÁC' : 'UNDO',
+              onPressed: () {
+                ref.read(sideTasksRepositoryProvider).addSideTask(
+                      userId,
+                      taskName,
+                      isDone: false,
+                    );
+              },
+            ),
+          ),
+        );
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -73,20 +114,21 @@ class _SideTasksScreenState extends ConsumerState<SideTasksScreen> {
                   itemCount: tasks.length,
                   itemBuilder: (context, index) {
                     final task = tasks[index];
+                    final isDone = task.isDone || _completingTaskIds.contains(task.id);
                     return ListTile(
                       leading: Checkbox(
-                        value: task.isDone,
+                        value: isDone,
                         onChanged: (val) {
-                          if (user != null && val != null) {
-                            ref.read(sideTasksRepositoryProvider).toggleSideTaskCompletion(user.uid, task.id, val);
+                          if (user != null) {
+                            _completeAndRemoveTask(user.uid, task.id, task.name);
                           }
                         },
                       ),
                       title: Text(
                         task.name,
                         style: TextStyle(
-                          decoration: task.isDone ? TextDecoration.lineThrough : null,
-                          color: task.isDone ? Colors.grey : null,
+                          decoration: isDone ? TextDecoration.lineThrough : null,
+                          color: isDone ? Colors.grey : null,
                         ),
                       ),
                       trailing: Row(
