@@ -17,6 +17,9 @@ import 'widgets/side_panel_tab.dart';
 import '../../notes/presentation/notes_screen.dart';
 import '../../../core/updater/app_updater.dart';
 import '../../../core/updater/update_dialog.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/localization/locale_provider.dart';
+import '../../../core/localization/language_switch_button.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -45,20 +48,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Future<void> _manualCheckUpdate(BuildContext context) async {
     Navigator.pop(context);
+    final l10n = context.l10n;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Row(
           children: [
-            SizedBox(
+            const SizedBox(
               width: 16,
               height: 16,
               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
             ),
-            SizedBox(width: 12),
-            Text('Đang kiểm tra bản cập nhật...'),
+            const SizedBox(width: 12),
+            Text(l10n.checkingForUpdates),
           ],
         ),
-        duration: Duration(seconds: 2),
+        duration: const Duration(seconds: 2),
       ),
     );
 
@@ -71,7 +75,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Ứng dụng đang ở phiên bản mới nhất (${info.currentVersion.split("+").first})',
+            l10n.appUpToDate(info.currentVersion.split("+").first),
           ),
           backgroundColor: AppColors.accent,
         ),
@@ -119,21 +123,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         type: BottomNavigationBarType.fixed,
         selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5, letterSpacing: -0.2),
         unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11.5, letterSpacing: -0.2),
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_view_week_outlined),
-            activeIcon: Icon(Icons.calendar_view_week),
-            label: 'Planner',
+            icon: const Icon(Icons.calendar_view_week_outlined),
+            activeIcon: const Icon(Icons.calendar_view_week),
+            label: context.l10n.planner,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.check_circle_outline),
-            activeIcon: Icon(Icons.check_circle),
-            label: 'Việc phụ',
+            icon: const Icon(Icons.check_circle_outline),
+            activeIcon: const Icon(Icons.check_circle),
+            label: context.l10n.sideTasks,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.sticky_note_2_outlined),
-            activeIcon: Icon(Icons.sticky_note_2),
-            label: 'Ghi chú',
+            icon: const Icon(Icons.sticky_note_2_outlined),
+            activeIcon: const Icon(Icons.sticky_note_2),
+            label: context.l10n.notes,
           ),
         ],
       ),
@@ -141,6 +145,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   PreferredSizeWidget _buildAppBar() {
+    final l10n = context.l10n;
     final user = ref.watch(authRepositoryProvider).currentUser;
     final initial = (user?.displayName?.isNotEmpty == true
         ? user!.displayName![0].toUpperCase()
@@ -150,17 +155,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     String subtitle;
     switch (_currentIndex) {
       case 0:
-        title = 'WeekLoop';
-        subtitle = 'Kế hoạch theo tuần';
+        title = l10n.appName;
+        subtitle = l10n.tagline;
         break;
       case 1:
-        title = 'Đầu việc phụ';
-        subtitle = 'Ghi nhanh việc lặt vặt';
+        title = l10n.sideTasksTitle;
+        subtitle = l10n.isVietnamese ? 'Ghi nhanh việc lặt vặt' : 'Quick side tasks';
         break;
       case 2:
       default:
-        title = 'Ghi chú';
-        subtitle = 'Ý tưởng & Tài liệu';
+        title = l10n.notes;
+        subtitle = l10n.isVietnamese ? 'Ý tưởng & Tài liệu' : 'Ideas & Documents';
         break;
     }
 
@@ -390,6 +395,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildDrawer() {
+    final l10n = context.l10n;
     final user = ref.watch(authRepositoryProvider).currentUser;
     final taskGroupsAsync = ref.watch(taskGroupsProvider);
 
@@ -580,9 +586,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   // ─── Tools & Utilities ────────────────────────────────────
                   Padding(
                     padding: const EdgeInsets.fromLTRB(18, 8, 12, 6),
-                    child: const Text(
-                      'TIỆN ÍCH',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.utilitiesSection,
+                      style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textMuted,
@@ -594,7 +600,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     dense: true,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 18),
                     leading: const Icon(Icons.bookmark_border_rounded, color: AppColors.textSecondary, size: 20),
-                    title: const Text('Tài liệu & Link', style: TextStyle(color: AppColors.text, fontSize: 14, fontWeight: FontWeight.w500)),
+                    title: Text(l10n.resourcesAndLinks, style: const TextStyle(color: AppColors.text, fontSize: 14, fontWeight: FontWeight.w500)),
                     onTap: () {
                       Navigator.pop(context);
                       showModalBottomSheet(
@@ -609,7 +615,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     dense: true,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 18),
                     leading: const Icon(Icons.delete_outline_rounded, color: AppColors.textSecondary, size: 20),
-                    title: const Text('Thùng rác', style: TextStyle(color: AppColors.text, fontSize: 14, fontWeight: FontWeight.w500)),
+                    title: Text(l10n.trash, style: const TextStyle(color: AppColors.text, fontSize: 14, fontWeight: FontWeight.w500)),
                     onTap: () {
                       Navigator.pop(context);
                       showModalBottomSheet(
@@ -623,8 +629,30 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ListTile(
                     dense: true,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 18),
+                    leading: const Icon(Icons.language_rounded, color: AppColors.textSecondary, size: 20),
+                    title: Text(l10n.language, style: const TextStyle(color: AppColors.text, fontSize: 14, fontWeight: FontWeight.w500)),
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.bgAlt,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.border, width: 0.8),
+                      ),
+                      child: Text(
+                        ref.watch(currentAppLanguageProvider) == AppLanguage.vi ? '🇻🇳 Tiếng Việt' : '🇬🇧 English',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.accent),
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      showLanguageSelectionSheet(context);
+                    },
+                  ),
+                  ListTile(
+                    dense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 18),
                     leading: const Icon(Icons.system_update_alt_rounded, color: AppColors.textSecondary, size: 20),
-                    title: const Text('Kiểm tra bản cập nhật', style: TextStyle(color: AppColors.text, fontSize: 14, fontWeight: FontWeight.w500)),
+                    title: Text(l10n.checkForUpdates, style: const TextStyle(color: AppColors.text, fontSize: 14, fontWeight: FontWeight.w500)),
                     onTap: () => _manualCheckUpdate(context),
                   ),
                 ],
@@ -640,8 +668,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 dense: true,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 leading: const Icon(Icons.logout_rounded, color: Colors.redAccent, size: 20),
-                title: const Text('Đăng xuất', style: TextStyle(color: Colors.redAccent, fontSize: 14, fontWeight: FontWeight.w600)),
-                trailing: const Text('v1.0.0', style: TextStyle(color: AppColors.textFaint, fontSize: 11)),
+                title: Text(l10n.logout, style: const TextStyle(color: Colors.redAccent, fontSize: 14, fontWeight: FontWeight.w600)),
+                trailing: const Text('v1.2.0', style: TextStyle(color: AppColors.textFaint, fontSize: 11)),
                 onTap: () async {
                   await ref.read(authRepositoryProvider).signOut();
                   if (mounted) context.go('/login');

@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:todohuy/core/localization/app_localizations.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:todohuy/core/theme/app_colors.dart';
 import 'package:todohuy/features/auth/data/auth_repository.dart';
@@ -415,6 +417,7 @@ Widget createTestApp({
   FakeSideTasksRepository? sideTasksRepo,
   FakeNotesRepository? notesRepo,
   FakeResourcesRepository? resourcesRepo,
+  Locale? locale,
 }) {
   PackageInfo.setMockInitialValues(
     appName: 'WeekLoop',
@@ -442,6 +445,14 @@ Widget createTestApp({
     child: MaterialApp.router(
       title: 'WeekLoop',
       routerConfig: router,
+      locale: locale ?? const Locale('vi'),
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppColors.accent,

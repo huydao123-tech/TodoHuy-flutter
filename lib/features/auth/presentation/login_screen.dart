@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../data/auth_repository.dart';
 import 'package:go_router/go_router.dart';
+import '../data/auth_repository.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/localization/app_localizations.dart';
+import '../../../core/localization/language_switch_button.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -33,25 +35,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  String _getFirebaseErrorMessage(dynamic error) {
+  String _getFirebaseErrorMessage(dynamic error, AppLocalizations l10n) {
     if (error is FirebaseAuthException) {
       switch (error.code) {
         case 'user-not-found':
-          return 'Không tìm thấy tài khoản với email này.';
+          return l10n.errUserNotFound;
         case 'wrong-password':
-          return 'Sai mật khẩu.';
+          return l10n.errWrongPassword;
         case 'email-already-in-use':
-          return 'Email này đã được sử dụng. Vui lòng đăng nhập.';
+          return l10n.errEmailInUse;
         case 'invalid-email':
-          return 'Định dạng email không hợp lệ.';
+          return l10n.errInvalidEmail;
         case 'weak-password':
-          return 'Mật khẩu quá yếu (tối thiểu 6 ký tự).';
+          return l10n.errWeakPassword;
         case 'popup-closed-by-user':
-          return 'Bạn đã đóng cửa sổ đăng nhập Google.';
+          return l10n.errPopupClosed;
         case 'popup-blocked':
-          return 'Trình duyệt chặn popup. Vui lòng cấp quyền mở popup.';
+          return l10n.errPopupBlocked;
         default:
-          return error.message ?? 'Đã xảy ra lỗi (${error.code})';
+          return error.message ?? '${l10n.error} (${error.code})';
       }
     }
     return error.toString();
@@ -61,6 +63,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
 
+    final l10n = context.l10n;
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final fullName = _nameController.text.trim();
@@ -70,7 +73,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         await ref.read(authRepositoryProvider).signUpWithEmail(
           email,
           password,
-          fullName.isEmpty ? 'Người dùng' : fullName,
+          fullName.isEmpty ? l10n.defaultUserName : fullName,
         );
       } else {
         await ref.read(authRepositoryProvider).signInWithEmail(email, password);
@@ -80,7 +83,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_getFirebaseErrorMessage(e)),
+            content: Text(_getFirebaseErrorMessage(e, l10n)),
             backgroundColor: Colors.red.shade700,
           ),
         );
@@ -96,6 +99,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _signInWithGoogle() async {
     setState(() => _isLoading = true);
+    final l10n = context.l10n;
     try {
       await ref.read(authRepositoryProvider).signInWithGoogle();
       if (mounted) context.go('/');
@@ -103,7 +107,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lỗi Google Sign-In: ${_getFirebaseErrorMessage(e)}'),
+            content: Text('${l10n.errGoogleSignInPrefix}${_getFirebaseErrorMessage(e, l10n)}'),
             backgroundColor: Colors.red.shade700,
           ),
         );
@@ -115,6 +119,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -128,6 +134,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // Language Switcher Pill at Top Right
+                    const Align(
+                      alignment: Alignment.topRight,
+                      child: LanguagePillToggle(),
+                    ),
+                    const SizedBox(height: 12),
+
                     Center(
                       child: Container(
                         width: 68,
@@ -152,10 +165,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 18),
-                    const Text(
-                      'WeekLoop',
+                    Text(
+                      l10n.appName,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w800,
                         color: AppColors.text,
@@ -164,7 +177,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      _isSignUp ? 'Tạo tài khoản mới để bắt đầu' : 'Kế hoạch tuần & Quản lý công việc',
+                      _isSignUp ? l10n.createAccountToStart : l10n.tagline,
                       textAlign: TextAlign.center,
                       style: const TextStyle(fontSize: 14, color: AppColors.textMuted),
                     ),
@@ -203,7 +216,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       : null,
                                 ),
                                 child: Text(
-                                  'Đăng Nhập',
+                                  l10n.login,
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontWeight: !_isSignUp ? FontWeight.w700 : FontWeight.w500,
@@ -237,7 +250,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       : null,
                                 ),
                                 child: Text(
-                                  'Đăng Ký',
+                                  l10n.signUp,
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontWeight: _isSignUp ? FontWeight.w700 : FontWeight.w500,
@@ -257,14 +270,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     if (_isSignUp) ...[
                       TextFormField(
                         controller: _nameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Họ và tên',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.person_outline),
+                        decoration: InputDecoration(
+                          labelText: l10n.fullName,
+                          border: const OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.person_outline),
                         ),
                         validator: (val) {
                           if (!_isSignUp) return null;
-                          if (val == null || val.trim().isEmpty) return 'Vui lòng nhập họ và tên';
+                          if (val == null || val.trim().isEmpty) return l10n.errEnterName;
                           return null;
                         },
                       ),
@@ -274,15 +287,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     // Email
                     TextFormField(
                       controller: _emailController,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.email_outlined),
+                      decoration: InputDecoration(
+                        labelText: l10n.email,
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.email_outlined),
                       ),
                       keyboardType: TextInputType.emailAddress,
                       validator: (val) {
-                        if (val == null || val.trim().isEmpty) return 'Vui lòng nhập email';
-                        if (!val.contains('@') || !val.contains('.')) return 'Email không hợp lệ';
+                        if (val == null || val.trim().isEmpty) return l10n.errEnterEmail;
+                        if (!val.contains('@') || !val.contains('.')) return l10n.errInvalidEmail;
                         return null;
                       },
                     ),
@@ -292,7 +305,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     TextFormField(
                       controller: _passwordController,
                       decoration: InputDecoration(
-                        labelText: 'Mật khẩu',
+                        labelText: l10n.password,
                         border: const OutlineInputBorder(),
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
@@ -302,8 +315,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       obscureText: _obscurePassword,
                       validator: (val) {
-                        if (val == null || val.isEmpty) return 'Vui lòng nhập mật khẩu';
-                        if (val.length < 6) return 'Mật khẩu phải từ 6 ký tự trở lên';
+                        if (val == null || val.isEmpty) return l10n.errEnterPassword;
+                        if (val.length < 6) return l10n.errPasswordTooShort;
                         return null;
                       },
                     ),
@@ -317,9 +330,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             minimumSize: const Size(0, 32),
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
-                          child: const Text(
-                            'Quên mật khẩu?',
-                            style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                          child: Text(
+                            l10n.forgotPassword,
+                            style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
                           ),
                         ),
                       ),
@@ -329,15 +342,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     if (_isSignUp) ...[
                       TextFormField(
                         controller: _confirmPasswordController,
-                        decoration: const InputDecoration(
-                          labelText: 'Xác nhận lại mật khẩu',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.lock_reset),
+                        decoration: InputDecoration(
+                          labelText: l10n.confirmPassword,
+                          border: const OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.lock_reset),
                         ),
                         obscureText: _obscurePassword,
                         validator: (val) {
                           if (!_isSignUp) return null;
-                          if (val != _passwordController.text) return 'Mật khẩu xác nhận không khớp';
+                          if (val != _passwordController.text) return l10n.errPasswordMismatch;
                           return null;
                         },
                       ),
@@ -360,7 +373,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                             )
                           : Text(
-                              _isSignUp ? 'Tạo Tài Khoản' : 'Đăng Nhập',
+                              _isSignUp ? l10n.createAccountBtn : l10n.login,
                               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                             ),
                     ),
@@ -372,7 +385,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         const Expanded(child: Divider()),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Text('HOẶC', style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+                          child: Text(l10n.orDivider, style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
                         ),
                         const Expanded(child: Divider()),
                       ],
@@ -388,7 +401,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         height: 20,
                         errorBuilder: (_, __, ___) => const Icon(Icons.login),
                       ),
-                      label: const Text('Tiếp tục với Google', style: TextStyle(fontSize: 15)),
+                      label: Text(l10n.continueWithGoogle, style: const TextStyle(fontSize: 15)),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -401,8 +414,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       onPressed: _isLoading ? null : () => setState(() => _isSignUp = !_isSignUp),
                       child: Text(
                         _isSignUp
-                            ? 'Đã có tài khoản? Đăng nhập ngay'
-                            : 'Chưa có tài khoản? Đăng ký ngay',
+                            ? l10n.alreadyHaveAccount
+                            : l10n.dontHaveAccount,
                         style: const TextStyle(color: Color(0xFF16A34A)),
                       ),
                     ),

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'core/theme/app_colors.dart';
 import 'firebase_options.dart';
 import 'core/router/app_router.dart';
+import 'core/localization/app_localizations.dart';
+import 'core/localization/locale_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,15 +22,26 @@ void main() async {
   );
 }
 
-class TodoHuyApp extends StatelessWidget {
+class TodoHuyApp extends ConsumerWidget {
   const TodoHuyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(appRouterProvider);
+    final locale = ref.watch(localeProvider);
+
     return MaterialApp.router(
       title: 'WeekLoop',
       debugShowCheckedModeBanner: false,
-      routerConfig: goRouter,
+      routerConfig: router,
+      locale: locale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       theme: _buildLightTheme(),
       darkTheme: _buildDarkTheme(),
       themeMode: ThemeMode.system,

@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../data/notes_repository.dart';
 import '../data/note_model.dart';
 import 'note_editor_sheet.dart';
+import '../../../core/localization/app_localizations.dart';
 
 // Color map: colorId → [background, border/accent]
 const _colorMap = {
@@ -44,6 +45,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final notesAsync = ref.watch(notesProvider);
 
     return Column(
@@ -162,8 +164,8 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                         const SizedBox(height: 16),
                         Text(
                           _searchQuery.isNotEmpty || _selectedCategory != 'Tất cả'
-                              ? 'Không tìm thấy ghi chú phù hợp.'
-                              : 'Chưa có ghi chú nào.\nNhấn + để tạo ghi chú đầu tiên.',
+                              ? (l10n.isVietnamese ? 'Không tìm thấy ghi chú phù hợp.' : 'No matching notes found.')
+                              : l10n.noNotesEmpty,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 15,

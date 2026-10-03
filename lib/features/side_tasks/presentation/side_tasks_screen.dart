@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/data/auth_repository.dart';
 import '../data/side_tasks_repository.dart';
+import '../../../core/localization/app_localizations.dart';
 
 class SideTasksScreen extends ConsumerStatefulWidget {
   const SideTasksScreen({super.key});
@@ -26,12 +27,13 @@ class _SideTasksScreenState extends ConsumerState<SideTasksScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final sideTasksAsync = ref.watch(sideTasksProvider);
     final user = ref.watch(authRepositoryProvider).currentUser;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Việc phụ (Lặt vặt)'),
+        title: Text(l10n.sideTasksScreenTitle),
       ),
       body: Column(
         children: [
@@ -42,10 +44,10 @@ class _SideTasksScreenState extends ConsumerState<SideTasksScreen> {
                 Expanded(
                   child: TextField(
                     controller: _controller,
-                    decoration: const InputDecoration(
-                      hintText: 'Thêm việc lặt vặt...',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: InputDecoration(
+                      hintText: l10n.sideTaskInputHint,
+                      border: const OutlineInputBorder(),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     ),
                     onSubmitted: (_) => _addSideTask(),
                   ),
@@ -65,7 +67,7 @@ class _SideTasksScreenState extends ConsumerState<SideTasksScreen> {
               error: (err, stack) => Center(child: Text('Lỗi: $err')),
               data: (tasks) {
                 if (tasks.isEmpty) {
-                  return const Center(child: Text('Chưa có việc phụ nào.'));
+                  return Center(child: Text(l10n.noSideTasksEmpty));
                 }
                 return ListView.builder(
                   itemCount: tasks.length,
@@ -97,15 +99,15 @@ class _SideTasksScreenState extends ConsumerState<SideTasksScreen> {
                               final newName = await showDialog<String>(
                                 context: context,
                                 builder: (ctx) => AlertDialog(
-                                  title: const Text('Sửa việc phụ'),
+                                  title: Text(l10n.editSideTask),
                                   content: TextField(
                                     controller: controller,
                                     autofocus: true,
                                     decoration: const InputDecoration(hintText: 'Nội dung việc...'),
                                   ),
                                   actions: [
-                                    TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
-                                    TextButton(onPressed: () => Navigator.pop(ctx, controller.text.trim()), child: const Text('Lưu')),
+                                    TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.cancel)),
+                                    TextButton(onPressed: () => Navigator.pop(ctx, controller.text.trim()), child: Text(l10n.save)),
                                   ],
                                 ),
                               );

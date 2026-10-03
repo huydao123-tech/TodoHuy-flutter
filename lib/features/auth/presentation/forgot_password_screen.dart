@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../data/auth_repository.dart';
 
 /// Forgot-password recovery flow.
@@ -53,6 +54,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(
@@ -63,9 +66,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           icon: const Icon(Icons.arrow_back, color: AppColors.text),
           onPressed: () => context.go('/login'),
         ),
-        title: const Text(
-          'Quên mật khẩu',
-          style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w700),
+        title: Text(
+          l10n.forgotPasswordTitle,
+          style: const TextStyle(color: AppColors.text, fontWeight: FontWeight.w700),
         ),
       ),
       body: SafeArea(
@@ -74,7 +77,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 440),
-              child: _sent ? _buildConfirmation() : _buildInput(),
+              child: _sent ? _buildConfirmation(l10n) : _buildInput(l10n),
             ),
           ),
         ),
@@ -82,7 +85,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     );
   }
 
-  Widget _buildInput() {
+  Widget _buildInput(AppLocalizations l10n) {
     return Form(
       key: _formKey,
       child: Column(
@@ -90,16 +93,16 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         children: [
           const Icon(Icons.lock_reset, size: 56, color: AppColors.accent),
           const SizedBox(height: 16),
-          const Text(
-            'Đặt lại mật khẩu',
+          Text(
+            l10n.resetPassword,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: AppColors.text),
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: AppColors.text),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Nhập email của bạn và chúng tôi sẽ gửi link đặt lại mật khẩu.',
+          Text(
+            l10n.resetPasswordInstruction,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: AppColors.textMuted, height: 1.5),
+            style: const TextStyle(fontSize: 14, color: AppColors.textMuted, height: 1.5),
           ),
           const SizedBox(height: 28),
           TextFormField(
@@ -109,14 +112,14 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             textInputAction: TextInputAction.done,
             onFieldSubmitted: (_) => _isLoading ? null : _sendResetEmail(),
             decoration: InputDecoration(
-              labelText: 'Email',
+              labelText: l10n.email,
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               prefixIcon: const Icon(Icons.email_outlined),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             ),
             validator: (val) {
-              if (val == null || val.trim().isEmpty) return 'Vui lòng nhập email';
-              if (!val.contains('@') || !val.contains('.')) return 'Email không hợp lệ';
+              if (val == null || val.trim().isEmpty) return l10n.errEnterEmail;
+              if (!val.contains('@') || !val.contains('.')) return l10n.errInvalidEmail;
               return null;
             },
           ),
@@ -134,9 +137,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     width: 20,
                     child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                   )
-                : const Text(
-                    'Gửi link đặt lại',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                : Text(
+                    l10n.sendResetLink,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
           ),
         ],
@@ -144,7 +147,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     );
   }
 
-  Widget _buildConfirmation() {
+  Widget _buildConfirmation(AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -160,16 +163,16 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           ),
         ),
         const SizedBox(height: 20),
-        const Text(
-          'Kiểm tra email của bạn',
+        Text(
+          l10n.checkYourEmail,
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.text),
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.text),
         ),
         const SizedBox(height: 12),
-        const Text(
-          'Nếu tài khoản tồn tại với địa chỉ này, bạn sẽ nhận được email trong vài phút.\nHãy kiểm tra cả thư mục Spam.',
+        Text(
+          l10n.resetConfirmationDesc,
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14, color: AppColors.textMuted, height: 1.6),
+          style: const TextStyle(fontSize: 14, color: AppColors.textMuted, height: 1.6),
         ),
         const SizedBox(height: 28),
         FilledButton(
@@ -179,17 +182,17 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             minimumSize: const Size.fromHeight(50),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
-          child: const Text(
-            'Gửi lại',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          child: Text(
+            l10n.resend,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
         ),
         const SizedBox(height: 12),
         TextButton(
           onPressed: () => context.go('/login'),
-          child: const Text(
-            'Quay lại Đăng nhập',
-            style: TextStyle(color: AppColors.accent, fontSize: 15, fontWeight: FontWeight.w600),
+          child: Text(
+            l10n.backToLogin,
+            style: const TextStyle(color: AppColors.accent, fontSize: 15, fontWeight: FontWeight.w600),
           ),
         ),
       ],

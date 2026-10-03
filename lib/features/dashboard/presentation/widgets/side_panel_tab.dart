@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../auth/data/auth_repository.dart';
 import '../../../side_tasks/data/side_tasks_repository.dart';
 
@@ -38,6 +39,7 @@ class _SidePanelTabState extends ConsumerState<SidePanelTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final sideTasksAsync = ref.watch(sideTasksProvider);
     final user = ref.watch(authRepositoryProvider).currentUser;
 
@@ -55,9 +57,9 @@ class _SidePanelTabState extends ConsumerState<SidePanelTab> {
             ),
             child: Row(
               children: [
-                _buildSegmentItem('All', 'Tất cả'),
-                _buildSegmentItem('Todo', 'Chưa xong'),
-                _buildSegmentItem('Done', 'Đã xong'),
+                _buildSegmentItem('All', l10n.filterAll),
+                _buildSegmentItem('Todo', l10n.filterTodo),
+                _buildSegmentItem('Done', l10n.filterDone),
               ],
             ),
           ),
@@ -267,8 +269,8 @@ class _SidePanelTabState extends ConsumerState<SidePanelTab> {
                     controller: _controller,
                     focusNode: _focusNode,
                     style: const TextStyle(fontSize: 14, color: AppColors.text),
-                    decoration: const InputDecoration(
-                      hintText: 'Thêm việc lặt vặt...',
+                    decoration: InputDecoration(
+                      hintText: l10n.sideTaskInputHint,
                       hintStyle: TextStyle(color: AppColors.textFaint, fontSize: 13.5),
                       prefixIcon: Icon(Icons.add_task_rounded, color: AppColors.textFaint, size: 20),
                       border: InputBorder.none,

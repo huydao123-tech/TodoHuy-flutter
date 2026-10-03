@@ -7,6 +7,7 @@ import '../../../core/utils/week_helper.dart';
 import '../../task_groups/data/task_group_model.dart';
 import '../data/planner_repository.dart';
 import 'widgets/goal_card.dart';
+import '../../../core/localization/app_localizations.dart';
 
 class WeekGridMobile extends ConsumerStatefulWidget {
   final VoidCallback? onAddGroup;
@@ -96,6 +97,7 @@ class _WeekGridMobileState extends ConsumerState<WeekGridMobile> {
   }
 
   Widget _buildWeekNavBar(DateTime baseWeek, DateTime today) {
+    final l10n = context.l10n;
     final offset = _currentPage - _initialPage;
     final displayedWeek = today.add(Duration(days: 7 * offset));
     final weekStr = _weekRangeLabel(displayedWeek);
@@ -116,7 +118,7 @@ class _WeekGridMobileState extends ConsumerState<WeekGridMobile> {
           IconButton(
             onPressed: () => _navigatePage(-1),
             icon: const Icon(Icons.chevron_left_rounded, color: AppColors.textSecondary, size: 22),
-            tooltip: 'Tuần trước',
+            tooltip: l10n.previousWeek,
             visualDensity: VisualDensity.compact,
             style: IconButton.styleFrom(
               backgroundColor: AppColors.bgAlt,
@@ -144,7 +146,7 @@ class _WeekGridMobileState extends ConsumerState<WeekGridMobile> {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        isCurrentWeek ? 'TUẦN HIỆN TẠI' : (displayedWeek.isBefore(today) ? 'TUẦN ĐÃ QUA' : 'TUẦN SẮP TỚI'),
+                        isCurrentWeek ? l10n.currentWeek : (displayedWeek.isBefore(today) ? l10n.pastWeek : l10n.upcomingWeek),
                         style: TextStyle(
                           fontSize: 10,
                           color: isCurrentWeek ? AppColors.accent : AppColors.textMuted,
@@ -175,8 +177,8 @@ class _WeekGridMobileState extends ConsumerState<WeekGridMobile> {
                             color: AppColors.accent.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Text(
-                            'Về hôm nay',
+                          child: Text(
+                            l10n.backToToday,
                             style: TextStyle(
                               fontSize: 10,
                               color: AppColors.accent,
@@ -194,7 +196,7 @@ class _WeekGridMobileState extends ConsumerState<WeekGridMobile> {
           IconButton(
             onPressed: () => _navigatePage(1),
             icon: const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary, size: 22),
-            tooltip: 'Tuần sau',
+            tooltip: l10n.nextWeek,
             visualDensity: VisualDensity.compact,
             style: IconButton.styleFrom(
               backgroundColor: AppColors.bgAlt,
