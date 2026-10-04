@@ -168,10 +168,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     Text(
                       l10n.appName,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.text,
+                        color: context.appTextColor,
                         letterSpacing: -0.8,
                       ),
                     ),
@@ -179,16 +179,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     Text(
                       _isSignUp ? l10n.createAccountToStart : l10n.tagline,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 14, color: AppColors.textMuted),
+                      style: TextStyle(fontSize: 14, color: context.appTextMutedColor),
                     ),
                     const SizedBox(height: 32),
 
                     // Toggle Tab Đăng nhập / Đăng ký
                     Container(
                       decoration: BoxDecoration(
-                        color: AppColors.bgAlt,
+                        color: context.subtleBgColor,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.border, width: 0.8),
+                        border: Border.all(color: context.appBorderColor, width: 0.8),
                       ),
                       padding: const EdgeInsets.all(4),
                       child: Row(
@@ -203,7 +203,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 duration: const Duration(milliseconds: 180),
                                 padding: const EdgeInsets.symmetric(vertical: 10),
                                 decoration: BoxDecoration(
-                                  color: !_isSignUp ? Colors.white : Colors.transparent,
+                                  color: !_isSignUp ? context.cardBgColor : Colors.transparent,
                                   borderRadius: BorderRadius.circular(10),
                                   boxShadow: !_isSignUp
                                       ? [
@@ -220,7 +220,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontWeight: !_isSignUp ? FontWeight.w700 : FontWeight.w500,
-                                    color: !_isSignUp ? AppColors.accent : AppColors.textMuted,
+                                    color: !_isSignUp ? AppColors.accent : context.appTextMutedColor,
                                     fontSize: 13.5,
                                   ),
                                 ),
@@ -237,7 +237,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 duration: const Duration(milliseconds: 180),
                                 padding: const EdgeInsets.symmetric(vertical: 10),
                                 decoration: BoxDecoration(
-                                  color: _isSignUp ? Colors.white : Colors.transparent,
+                                  color: _isSignUp ? context.cardBgColor : Colors.transparent,
                                   borderRadius: BorderRadius.circular(10),
                                   boxShadow: _isSignUp
                                       ? [
@@ -254,7 +254,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontWeight: _isSignUp ? FontWeight.w700 : FontWeight.w500,
-                                    color: _isSignUp ? AppColors.accent : AppColors.textMuted,
+                                    color: _isSignUp ? AppColors.accent : context.appTextMutedColor,
                                     fontSize: 13.5,
                                   ),
                                 ),
@@ -332,7 +332,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           child: Text(
                             l10n.forgotPassword,
-                            style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                            style: TextStyle(color: context.appTextMutedColor, fontSize: 13),
                           ),
                         ),
                       ),

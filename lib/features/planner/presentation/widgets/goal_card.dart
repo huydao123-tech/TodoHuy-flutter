@@ -359,7 +359,7 @@ class _GoalCardState extends ConsumerState<GoalCard> {
       physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(vertical: 4),
       itemCount: items.length,
-      separatorBuilder: (_, __) => const Divider(height: 1, indent: 48, color: AppColors.borderSubtle),
+      separatorBuilder: (_, __) => Divider(height: 1, indent: 48, color: context.appBorderColor.withValues(alpha: 0.6)),
       itemBuilder: (context, idx) {
         final item = items[idx];
         final isDone = item.status == WorkItemStatus.DONE;

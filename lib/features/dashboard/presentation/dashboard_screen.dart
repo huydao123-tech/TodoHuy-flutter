@@ -17,6 +17,7 @@ import '../../notes/presentation/note_editor_sheet.dart';
 import '../../planner/presentation/planner_screen.dart';
 import 'widgets/side_panel_tab.dart';
 import '../../notes/presentation/notes_screen.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../../../core/updater/app_updater.dart';
 import '../../../core/updater/update_dialog.dart';
 import '../../../core/localization/app_localizations.dart';
@@ -32,13 +33,26 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   int _currentIndex = 0;
+  String _appVersion = '';
 
   @override
   void initState() {
     super.initState();
+    _loadAppVersion();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkUpdateOnStartup();
     });
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (mounted) {
+        setState(() {
+          _appVersion = 'v${info.version}+${info.buildNumber}';
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _checkUpdateOnStartup() async {
@@ -88,7 +102,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: context.scaffoldBgColor,
       appBar: _buildAppBar(),
       drawer: _buildDrawer(),
       body: _buildBody(),
@@ -100,9 +114,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget _buildBottomNav() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: const Border(
-          top: BorderSide(color: AppColors.border, width: 0.8),
+        color: context.cardBgColor,
+        border: Border(
+          top: BorderSide(color: context.appBorderColor, width: 0.8),
         ),
         boxShadow: [
           BoxShadow(
@@ -614,7 +628,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ListTile(
                     dense: true,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 18),
-                    leading: const Icon(Icons.bookmark_border_rounded, color: AppColors.textSecondary, size: 20),
+                    leading: Icon(Icons.bookmark_border_rounded, color: context.appTextMutedColor, size: 20),
                     title: Text(l10n.resourcesAndLinks, style: TextStyle(color: context.appTextColor, fontSize: 14, fontWeight: FontWeight.w500)),
                     onTap: () {
                       Navigator.pop(context);
@@ -629,7 +643,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ListTile(
                     dense: true,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 18),
-                    leading: const Icon(Icons.delete_outline_rounded, color: AppColors.textSecondary, size: 20),
+                    leading: Icon(Icons.delete_outline_rounded, color: context.appTextMutedColor, size: 20),
                     title: Text(l10n.trash, style: TextStyle(color: context.appTextColor, fontSize: 14, fontWeight: FontWeight.w500)),
                     onTap: () {
                       Navigator.pop(context);
@@ -644,7 +658,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ListTile(
                     dense: true,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 18),
-                    leading: const Icon(Icons.language_rounded, color: AppColors.textSecondary, size: 20),
+                    leading: Icon(Icons.language_rounded, color: context.appTextMutedColor, size: 20),
                     title: Text(l10n.language, style: TextStyle(color: context.appTextColor, fontSize: 14, fontWeight: FontWeight.w500)),
                     trailing: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -670,7 +684,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       currentThemeMode == ThemeMode.dark
                           ? Icons.dark_mode_rounded
                           : (currentThemeMode == ThemeMode.light ? Icons.light_mode_rounded : Icons.brightness_auto_rounded),
-                      color: AppColors.textSecondary,
+                      color: context.appTextMutedColor,
                       size: 20,
                     ),
                     title: Text(l10n.theme, style: TextStyle(color: context.appTextColor, fontSize: 14, fontWeight: FontWeight.w500)),
@@ -696,7 +710,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ListTile(
                     dense: true,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 18),
-                    leading: const Icon(Icons.system_update_alt_rounded, color: AppColors.textSecondary, size: 20),
+                    leading: Icon(Icons.system_update_alt_rounded, color: context.appTextMutedColor, size: 20),
                     title: Text(l10n.checkForUpdates, style: TextStyle(color: context.appTextColor, fontSize: 14, fontWeight: FontWeight.w500)),
                     onTap: () => _manualCheckUpdate(context),
                   ),
@@ -714,7 +728,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 leading: const Icon(Icons.logout_rounded, color: Colors.redAccent, size: 20),
                 title: Text(l10n.logout, style: const TextStyle(color: Colors.redAccent, fontSize: 14, fontWeight: FontWeight.w600)),
-                trailing: const Text('v1.2.0', style: TextStyle(color: AppColors.textFaint, fontSize: 11)),
+                trailing: Text(
+                  _appVersion.isNotEmpty ? _appVersion : 'v1.3.0',
+                  style: const TextStyle(color: AppColors.textFaint, fontSize: 11),
+                ),
                 onTap: () async {
                   await ref.read(authRepositoryProvider).signOut();
                   if (mounted) context.go('/login');
@@ -792,9 +809,9 @@ class _AddTaskSheetState extends ConsumerState<_AddTaskSheet> {
       data: (groups) {
         if (groups.isEmpty) {
           return Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            decoration: BoxDecoration(
+              color: context.cardBgColor,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             ),
             padding: EdgeInsets.only(
               left: 24,
@@ -811,22 +828,22 @@ class _AddTaskSheetState extends ConsumerState<_AddTaskSheet> {
                     width: 36,
                     height: 4,
                     decoration: BoxDecoration(
-                        color: AppColors.border,
+                        color: context.appBorderColor,
                         borderRadius: BorderRadius.circular(2)),
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Chưa có nhóm công việc',
                   style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.text),
+                      color: context.appTextColor),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Bạn cần tạo ít nhất một nhóm công việc trước khi thêm công việc.',
-                  style: TextStyle(fontSize: 14, color: AppColors.textMuted),
+                  style: TextStyle(fontSize: 14, color: context.appTextMutedColor),
                 ),
                 const SizedBox(height: 20),
                 FilledButton(
@@ -853,9 +870,9 @@ class _AddTaskSheetState extends ConsumerState<_AddTaskSheet> {
         }
 
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          decoration: BoxDecoration(
+            color: context.cardBgColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           padding: EdgeInsets.only(
             left: 24,
@@ -872,7 +889,7 @@ class _AddTaskSheetState extends ConsumerState<_AddTaskSheet> {
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                      color: AppColors.border,
+                      color: context.appBorderColor,
                       borderRadius: BorderRadius.circular(2)),
                 ),
               ),
@@ -880,11 +897,11 @@ class _AddTaskSheetState extends ConsumerState<_AddTaskSheet> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Thêm công việc',
+                  Text('Thêm công việc',
                       style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.text)),
+                          color: context.appTextColor)),
                   TextButton.icon(
                     onPressed: widget.onAddGroup,
                     icon: const Icon(Icons.add_rounded, size: 16, color: AppColors.accent),
@@ -904,10 +921,10 @@ class _AddTaskSheetState extends ConsumerState<_AddTaskSheet> {
                   labelText: 'Nhóm công việc',
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.border)),
+                      borderSide: BorderSide(color: context.appBorderColor)),
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  fillColor: AppColors.bgAlt,
+                  fillColor: context.subtleBgColor,
                   filled: true,
                 ),
                 items: groups.map((g) {
@@ -947,13 +964,13 @@ class _AddTaskSheetState extends ConsumerState<_AddTaskSheet> {
                   hintText: 'Nhập nội dung công việc...',
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.border)),
+                      borderSide: BorderSide(color: context.appBorderColor)),
                   focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(color: AppColors.accent)),
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  fillColor: AppColors.bgAlt,
+                  fillColor: context.subtleBgColor,
                   filled: true,
                 ),
                 onSubmitted: (_) => _isSaving ? null : _save(weekStartStr),
@@ -1035,9 +1052,9 @@ class _AddGroupSheetState extends ConsumerState<_AddGroupSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: context.cardBgColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.only(
         left: 24, right: 24, top: 16,
@@ -1050,26 +1067,26 @@ class _AddGroupSheetState extends ConsumerState<_AddGroupSheet> {
           Center(
             child: Container(
               width: 36, height: 4,
-              decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+              decoration: BoxDecoration(color: context.appBorderColor, borderRadius: BorderRadius.circular(2)),
             ),
           ),
           const SizedBox(height: 16),
-          const Text('Thêm nhóm mới', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.text)),
+          Text('Thêm nhóm mới', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: context.appTextColor)),
           const SizedBox(height: 20),
           TextField(
             controller: _nameController,
             autofocus: true,
             decoration: InputDecoration(
               hintText: 'Tên nhóm công việc...',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: context.appBorderColor)),
               focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.accent)),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              fillColor: AppColors.bgAlt,
+              fillColor: context.subtleBgColor,
               filled: true,
             ),
           ),
           const SizedBox(height: 16),
-          const Text('Màu nhóm', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textMuted)),
+          Text('Màu nhóm', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: context.appTextMutedColor)),
           const SizedBox(height: 12),
           Row(
             children: List.generate(_colors.length, (i) {

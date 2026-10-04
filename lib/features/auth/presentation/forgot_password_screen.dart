@@ -57,18 +57,18 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     final l10n = context.l10n;
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: context.scaffoldBgColor,
       appBar: AppBar(
-        backgroundColor: AppColors.bg,
+        backgroundColor: context.scaffoldBgColor,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.text),
+          icon: Icon(Icons.arrow_back, color: context.appTextColor),
           onPressed: () => context.go('/login'),
         ),
         title: Text(
           l10n.forgotPasswordTitle,
-          style: const TextStyle(color: AppColors.text, fontWeight: FontWeight.w700),
+          style: TextStyle(color: context.appTextColor, fontWeight: FontWeight.w700),
         ),
       ),
       body: SafeArea(
@@ -96,13 +96,13 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           Text(
             l10n.resetPassword,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: AppColors.text),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: context.appTextColor),
           ),
           const SizedBox(height: 8),
           Text(
             l10n.resetPasswordInstruction,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 14, color: AppColors.textMuted, height: 1.5),
+            style: TextStyle(fontSize: 14, color: context.appTextMutedColor, height: 1.5),
           ),
           const SizedBox(height: 28),
           TextFormField(
@@ -166,13 +166,13 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         Text(
           l10n.checkYourEmail,
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.text),
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: context.appTextColor),
         ),
         const SizedBox(height: 12),
         Text(
           l10n.resetConfirmationDesc,
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 14, color: AppColors.textMuted, height: 1.6),
+          style: TextStyle(fontSize: 14, color: context.appTextMutedColor, height: 1.6),
         ),
         const SizedBox(height: 28),
         FilledButton(

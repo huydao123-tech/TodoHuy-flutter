@@ -413,7 +413,7 @@ class _TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
       children: WorkItemStatus.values.map((status) {
         final isSelected = _selectedStatus == status;
         final (label, color) = switch (status) {
-          WorkItemStatus.TODO => ('Cần làm', AppColors.textSecondary),
+          WorkItemStatus.TODO => ('Cần làm', context.appTextMutedColor),
           WorkItemStatus.IN_PROGRESS => ('Đang làm', AppColors.groupColors[2]),
           WorkItemStatus.DONE => ('Đã xong', AppColors.accent),
         };

@@ -15,9 +15,9 @@ class ResourcesSheet extends ConsumerWidget {
     final resourcesAsync = ref.watch(resourcesProvider);
 
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.bg,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: context.scaffoldBgColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: DraggableScrollableSheet(
         expand: false,
@@ -29,7 +29,7 @@ class ResourcesSheet extends ConsumerWidget {
             children: [
               // Handle + header
               _buildHeader(context, ref),
-              const Divider(height: 1, color: AppColors.border),
+              Divider(height: 1, color: context.appBorderColor),
 
               // List
               Expanded(
@@ -42,12 +42,12 @@ class ResourcesSheet extends ConsumerWidget {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.link_off, size: 48, color: AppColors.textFaint.withValues(alpha: 0.5)),
+                            Icon(Icons.link_off, size: 48, color: context.appTextFaintColor.withValues(alpha: 0.5)),
                             const SizedBox(height: 16),
-                            const Text(
+                            Text(
                               'Chưa có tài liệu nào.\nNhấn + để thêm link mới.',
                               textAlign: TextAlign.center,
-                              style: TextStyle(color: AppColors.textMuted, height: 1.5),
+                              style: TextStyle(color: context.appTextMutedColor, height: 1.5),
                             ),
                           ],
                         ),
@@ -57,7 +57,7 @@ class ResourcesSheet extends ConsumerWidget {
                       controller: scrollController,
                       padding: const EdgeInsets.only(bottom: 24),
                       itemCount: resources.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.border),
+                      separatorBuilder: (_, __) => Divider(height: 1, color: context.appBorderColor),
                       itemBuilder: (context, i) => _ResourceTile(resource: resources[i]),
                     );
                   },
@@ -79,14 +79,14 @@ class ResourcesSheet extends ConsumerWidget {
             child: Container(
               width: 36, height: 4,
               decoration: BoxDecoration(
-                  color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+                  color: context.appBorderColor, borderRadius: BorderRadius.circular(2)),
             ),
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              const Text('Tài liệu & Link',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.text)),
+              Text('Tài liệu & Link',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: context.appTextColor)),
               const Spacer(),
               FilledButton.icon(
                 onPressed: () => _showAddSheet(context, ref),
@@ -183,7 +183,7 @@ class _ResourceTile extends ConsumerWidget {
         ),
         title: Text(
           resource.title,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.text),
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: context.appTextColor),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -199,13 +199,13 @@ class _ResourceTile extends ConsumerWidget {
             if (resource.description.isNotEmpty)
               Text(
                 resource.description,
-                style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                style: TextStyle(fontSize: 12, color: context.appTextMutedColor),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
           ],
         ),
-        trailing: const Icon(Icons.open_in_new, size: 18, color: AppColors.textFaint),
+        trailing: Icon(Icons.open_in_new, size: 18, color: context.appTextFaintColor),
         onTap: () => _launchLink(context),
       ),
     );
@@ -237,21 +237,21 @@ class _AddResourceSheetState extends ConsumerState<_AddResourceSheet> {
 
   InputDecoration _fieldDecor(String hint, {IconData? icon}) => InputDecoration(
     hintText: hint,
-    hintStyle: const TextStyle(color: AppColors.textFaint, fontSize: 14),
-    prefixIcon: icon != null ? Icon(icon, size: 18, color: AppColors.textMuted) : null,
+    hintStyle: TextStyle(color: context.appTextFaintColor, fontSize: 14),
+    prefixIcon: icon != null ? Icon(icon, size: 18, color: context.appTextMutedColor) : null,
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.border),
+      borderSide: BorderSide(color: context.appBorderColor),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.border),
+      borderSide: BorderSide(color: context.appBorderColor),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
       borderSide: const BorderSide(color: AppColors.accent),
     ),
-    fillColor: AppColors.bgAlt,
+    fillColor: context.subtleBgColor,
     filled: true,
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
   );
@@ -287,9 +287,9 @@ class _AddResourceSheetState extends ConsumerState<_AddResourceSheet> {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: context.cardBgColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.only(
         left: 24, right: 24, top: 16, bottom: bottomInset + 24,
@@ -302,12 +302,12 @@ class _AddResourceSheetState extends ConsumerState<_AddResourceSheet> {
             Center(
               child: Container(
                 width: 36, height: 4,
-                decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+                decoration: BoxDecoration(color: context.appBorderColor, borderRadius: BorderRadius.circular(2)),
               ),
             ),
             const SizedBox(height: 16),
-            const Text('Thêm tài liệu / Link',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.text)),
+            Text('Thêm tài liệu / Link',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: context.appTextColor)),
             const SizedBox(height: 20),
             TextField(
               controller: _titleController,

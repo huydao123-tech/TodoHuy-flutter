@@ -22,9 +22,9 @@ class TrashSheet extends ConsumerWidget {
         : const Stream.empty();
 
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.bg,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: context.scaffoldBgColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: DraggableScrollableSheet(
         expand: false,
@@ -43,22 +43,22 @@ class TrashSheet extends ConsumerWidget {
                       child: Container(
                         width: 36, height: 4,
                         decoration: BoxDecoration(
-                            color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+                            color: context.appBorderColor, borderRadius: BorderRadius.circular(2)),
                       ),
                     ),
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        const Icon(Icons.delete_outline, color: AppColors.textMuted),
+                        Icon(Icons.delete_outline, color: context.appTextMutedColor),
                         const SizedBox(width: 10),
-                        const Text('Thùng rác',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.text)),
+                        Text('Thùng rác',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: context.appTextColor)),
                       ],
                     ),
                     const SizedBox(height: 4),
-                    const Text(
+                    Text(
                       'Các nhóm đã xóa. Khôi phục hoặc xóa vĩnh viễn.',
-                      style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+                      style: TextStyle(fontSize: 12, color: context.appTextMutedColor),
                     ),
                     const SizedBox(height: 10),
                     Container(
@@ -68,14 +68,14 @@ class TrashSheet extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: AppColors.accent.withValues(alpha: 0.2)),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
-                          Icon(Icons.info_outline, size: 16, color: AppColors.accent),
-                          SizedBox(width: 8),
+                          const Icon(Icons.info_outline, size: 16, color: AppColors.accent),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               'Các nhóm trong thùng rác sẽ bị xóa vĩnh viễn sau 30 ngày.',
-                              style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+                              style: TextStyle(fontSize: 12, color: context.appTextMutedColor),
                             ),
                           ),
                         ],
@@ -84,7 +84,7 @@ class TrashSheet extends ConsumerWidget {
                   ],
                 ),
               ),
-              const Divider(height: 1, color: AppColors.border),
+              Divider(height: 1, color: context.appBorderColor),
 
               Expanded(
                 child: StreamBuilder(
@@ -100,10 +100,10 @@ class TrashSheet extends ConsumerWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.delete_sweep_outlined,
-                                size: 52, color: AppColors.textFaint.withValues(alpha: 0.5)),
+                                size: 52, color: context.appTextFaintColor.withValues(alpha: 0.5)),
                             const SizedBox(height: 16),
-                            const Text('Thùng rác trống',
-                                style: TextStyle(color: AppColors.textMuted, fontSize: 15)),
+                            Text('Thùng rác trống',
+                                style: TextStyle(color: context.appTextMutedColor, fontSize: 15)),
                           ],
                         ),
                       );
@@ -112,7 +112,7 @@ class TrashSheet extends ConsumerWidget {
                       controller: scrollController,
                       padding: const EdgeInsets.only(bottom: 24),
                       itemCount: groups.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.border),
+                      separatorBuilder: (_, __) => Divider(height: 1, color: context.appBorderColor),
                       itemBuilder: (context, i) {
                         final group = groups[i];
                         Color groupColor;
@@ -129,12 +129,12 @@ class TrashSheet extends ConsumerWidget {
                           ),
                           title: Text(
                             group.name,
-                            style: const TextStyle(
-                                fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.text),
+                            style: TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.w600, color: context.appTextColor),
                           ),
                           subtitle: Text(
                             _daysAgoLabel(group.archivedAt),
-                            style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                            style: TextStyle(fontSize: 12, color: context.appTextMutedColor),
                           ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,

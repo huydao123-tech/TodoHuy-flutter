@@ -167,10 +167,10 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                               ? (l10n.isVietnamese ? 'Không tìm thấy ghi chú phù hợp.' : 'No matching notes found.')
                               : l10n.noNotesEmpty,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.text,
+                            color: context.appTextColor,
                             height: 1.5,
                           ),
                         ),
@@ -289,7 +289,7 @@ class _NoteCard extends StatelessWidget {
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: colors[0],
+                        color: context.isDarkMode ? context.subtleBgColor : colors[0],
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: colors[1], width: 0.8),
                       ),
@@ -299,15 +299,15 @@ class _NoteCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: colors[0],
+                        color: context.isDarkMode ? context.subtleBgColor : colors[0],
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: colors[1], width: 0.8),
                       ),
                       child: Text(
                         note.category,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 10.5,
-                          color: AppColors.textSecondary,
+                          color: context.isDarkMode ? context.appTextMutedColor : AppColors.textSecondary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

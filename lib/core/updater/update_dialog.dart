@@ -109,7 +109,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
       canPop: !_isDownloading,
       child: Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: Colors.white,
+        backgroundColor: context.cardBgColor,
         surfaceTintColor: Colors.transparent,
         insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
         child: Padding(
@@ -139,12 +139,12 @@ class _UpdateDialogState extends State<UpdateDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Cập nhật phiên bản mới',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.text,
+                            color: context.appTextColor,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -167,18 +167,18 @@ class _UpdateDialogState extends State<UpdateDialog> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: AppColors.bgAlt,
+                  color: context.subtleBgColor,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: context.appBorderColor),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       'Bản hiện tại: v${info.currentVersion.split("+").first}',
-                      style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                      style: TextStyle(fontSize: 12, color: context.appTextMutedColor),
                     ),
-                    const Icon(Icons.arrow_forward_rounded, size: 14, color: AppColors.textMuted),
+                    Icon(Icons.arrow_forward_rounded, size: 14, color: context.appTextMutedColor),
                     Text(
                       'Bản mới: v${info.latestVersion}',
                       style: const TextStyle(
@@ -193,12 +193,12 @@ class _UpdateDialogState extends State<UpdateDialog> {
               const SizedBox(height: 16),
 
               // Release notes
-              const Text(
+              Text(
                 'Nội dung thay đổi:',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.text,
+                  color: context.appTextColor,
                 ),
               ),
               const SizedBox(height: 6),
@@ -206,17 +206,17 @@ class _UpdateDialogState extends State<UpdateDialog> {
                 constraints: const BoxConstraints(maxHeight: 140),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.bgAlt,
+                  color: context.subtleBgColor,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: context.appBorderColor),
                 ),
                 child: SingleChildScrollView(
                   child: Text(
                     info.releaseNotes,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       height: 1.4,
-                      color: AppColors.text,
+                      color: context.appTextColor,
                     ),
                   ),
                 ),
@@ -229,7 +229,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
                   borderRadius: BorderRadius.circular(6),
                   child: LinearProgressIndicator(
                     value: _progress > 0 ? _progress : null,
-                    backgroundColor: AppColors.border,
+                    backgroundColor: context.appBorderColor,
                     valueColor: const AlwaysStoppedAnimation<Color>(AppColors.accent),
                     minHeight: 8,
                   ),
@@ -238,10 +238,10 @@ class _UpdateDialogState extends State<UpdateDialog> {
                 Center(
                   child: Text(
                     _progressText,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.textMuted,
+                      color: context.appTextMutedColor,
                     ),
                   ),
                 ),
@@ -280,9 +280,9 @@ class _UpdateDialogState extends State<UpdateDialog> {
                   if (!_isDownloading)
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text(
+                      child: Text(
                         'Để sau',
-                        style: TextStyle(color: AppColors.textMuted),
+                        style: TextStyle(color: context.appTextMutedColor),
                       ),
                     ),
                   const SizedBox(width: 8),

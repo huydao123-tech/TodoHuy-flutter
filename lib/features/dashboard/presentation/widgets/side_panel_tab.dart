@@ -155,10 +155,10 @@ class _SidePanelTabState extends ConsumerState<SidePanelTab> {
                               ? 'Tuyệt vời! Không còn việc phụ nào.'
                               : 'All caught up! No side tasks.',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.text,
+                            color: context.appTextColor,
                           ),
                         ),
                         const SizedBox(height: 6),
@@ -167,7 +167,7 @@ class _SidePanelTabState extends ConsumerState<SidePanelTab> {
                               ? 'Nhập việc cần làm vào ô bên dưới để ghi nhanh.'
                               : 'Enter a task in the field below for quick capture.',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 13, color: AppColors.textMuted),
+                          style: TextStyle(fontSize: 13, color: context.appTextMutedColor),
                         ),
                       ],
                     ),
@@ -238,13 +238,13 @@ class _SidePanelTabState extends ConsumerState<SidePanelTab> {
                       opacity: isCompleting ? 0.4 : 1.0,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: context.cardBgColor,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: isCompleting ? AppColors.accent.withValues(alpha: 0.3) : AppColors.border,
+                            color: isCompleting ? AppColors.accent.withValues(alpha: 0.3) : context.appBorderColor,
                             width: 0.8,
                           ),
-                          boxShadow: const [AppColors.softShadow],
+                          boxShadow: context.isDarkMode ? null : const [AppColors.softShadow],
                         ),
                         child: InkWell(
                           onTap: () {
@@ -266,7 +266,7 @@ class _SidePanelTabState extends ConsumerState<SidePanelTab> {
                                   value: isCompleting,
                                   activeColor: AppColors.accent,
                                   shape: const CircleBorder(),
-                                  side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.8),
+                                  side: BorderSide(color: context.isDarkMode ? AppColors.darkTextFaint : const Color(0xFFCBD5E1), width: 1.8),
                                   onChanged: (_) {
                                     if (user != null) {
                                       _completeAndRemoveTask(user.uid, task);
@@ -281,8 +281,8 @@ class _SidePanelTabState extends ConsumerState<SidePanelTab> {
                                       fontSize: 14.5,
                                       fontWeight: isCompleting ? FontWeight.normal : FontWeight.w500,
                                       decoration: isCompleting ? TextDecoration.lineThrough : null,
-                                      decorationColor: AppColors.textMuted,
-                                      color: isCompleting ? AppColors.textMuted : AppColors.text,
+                                      decorationColor: context.appTextMutedColor,
+                                      color: isCompleting ? context.appTextMutedColor : context.appTextColor,
                                       height: 1.3,
                                     ),
                                     child: Text(task.name),
@@ -313,8 +313,8 @@ class _SidePanelTabState extends ConsumerState<SidePanelTab> {
         // ─── Linear Style Bottom Quick Capture Dock ───────────────────
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
-            border: const Border(top: BorderSide(color: AppColors.border, width: 0.8)),
+            color: context.cardBgColor,
+            border: Border(top: BorderSide(color: context.appBorderColor, width: 0.8)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.03),
@@ -336,14 +336,14 @@ class _SidePanelTabState extends ConsumerState<SidePanelTab> {
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: AppColors.bgAlt,
+                    color: context.subtleBgColor,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: context.appBorderColor),
                   ),
                   child: TextField(
                     controller: _controller,
                     focusNode: _focusNode,
-                    style: const TextStyle(fontSize: 14, color: AppColors.text),
+                    style: TextStyle(fontSize: 14, color: context.appTextColor),
                     decoration: InputDecoration(
                       hintText: l10n.sideTaskInputHint,
                       hintStyle: const TextStyle(color: AppColors.textFaint, fontSize: 13.5),

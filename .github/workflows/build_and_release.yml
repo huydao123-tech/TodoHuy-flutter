@@ -60,19 +60,20 @@ jobs:
         id: get_version
         run: |
           VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //;s/+.*//' | tr -d '\r')
-          BUILD_NUM=$(grep '^version:' pubspec.yaml | sed 's/version: .*+//' | tr -d '\r')
+          RUN_NUM="${{ github.run_number }}"
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             TAG_NAME="${{ github.ref_name }}"
           else
-            TAG_NAME="v${VERSION}+${BUILD_NUM}.${{ github.run_number }}"
+            TAG_NAME="v${VERSION}+${RUN_NUM}"
           fi
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "run_num=${RUN_NUM}" >> $GITHUB_OUTPUT
           echo "tag_name=${TAG_NAME}" >> $GITHUB_OUTPUT
           echo "Determined release tag: ${TAG_NAME}"
 
       - name: Build Android Release APK
         run: |
-          flutter build apk --release
+          flutter build apk --release --build-name=${{ steps.get_version.outputs.version }} --build-number=${{ steps.get_version.outputs.run_num }}
           cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/WeekLoop.apk
 
       - name: Publish GitHub Release

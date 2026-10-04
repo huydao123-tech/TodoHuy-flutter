@@ -15,9 +15,9 @@ class LanguagePillToggle extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.bgAlt,
+        color: context.subtleBgColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border, width: 0.8),
+        border: Border.all(color: context.appBorderColor, width: 0.8),
       ),
       padding: const EdgeInsets.all(3),
       child: Row(
@@ -59,7 +59,7 @@ class LanguagePillToggle extends ConsumerWidget {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: isActive ? Colors.white : Colors.transparent,
+          color: isActive ? context.cardBgColor : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
           boxShadow: isActive
               ? [
@@ -76,7 +76,7 @@ class LanguagePillToggle extends ConsumerWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-            color: isActive ? AppColors.accent : AppColors.textMuted,
+            color: isActive ? AppColors.accent : context.appTextMutedColor,
           ),
         ),
       ),
@@ -103,9 +103,9 @@ class _LanguageSelectionSheet extends ConsumerWidget {
     final currentLang = ref.watch(currentAppLanguageProvider);
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: context.cardBgColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.fromLTRB(
         20,
@@ -123,7 +123,7 @@ class _LanguageSelectionSheet extends ConsumerWidget {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.border,
+                color: context.appBorderColor,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -131,10 +131,10 @@ class _LanguageSelectionSheet extends ConsumerWidget {
           const SizedBox(height: 16),
           Text(
             l10n.selectLanguage,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
-              color: AppColors.text,
+              color: context.appTextColor,
               letterSpacing: -0.4,
             ),
           ),
@@ -184,10 +184,10 @@ class _LanguageSelectionSheet extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.accent.withValues(alpha: 0.08) : AppColors.bgAlt,
+          color: isSelected ? AppColors.accent.withValues(alpha: 0.08) : context.subtleBgColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? AppColors.accent : AppColors.border,
+            color: isSelected ? AppColors.accent : context.appBorderColor,
             width: isSelected ? 1.5 : 0.8,
           ),
         ),
@@ -204,13 +204,13 @@ class _LanguageSelectionSheet extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                      color: isSelected ? AppColors.accent : AppColors.text,
+                      color: isSelected ? AppColors.accent : context.appTextColor,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                    style: TextStyle(fontSize: 12, color: context.appTextMutedColor),
                   ),
                 ],
               ),
@@ -218,7 +218,7 @@ class _LanguageSelectionSheet extends ConsumerWidget {
             if (isSelected)
               const Icon(Icons.check_circle_rounded, color: AppColors.accent, size: 22)
             else
-              const Icon(Icons.radio_button_unchecked_rounded, color: AppColors.textFaint, size: 22),
+              Icon(Icons.radio_button_unchecked_rounded, color: context.appTextFaintColor, size: 22),
           ],
         ),
       ),

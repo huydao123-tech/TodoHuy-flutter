@@ -66,6 +66,16 @@ class _NoteEditorSheetState extends ConsumerState<NoteEditorSheet> {
 
   List<Color> get _currentColors => _coverColors[_selectedColorKey] ?? _coverColors['stone']!;
 
+  // Theme-aware surfaces: pastel in light mode, tinted dark surface in dark mode.
+  Color get _sheetBg => context.isDarkMode
+      ? Color.alphaBlend(_currentColors[1].withValues(alpha: 0.10), AppColors.darkSurface)
+      : _currentColors[0];
+  Color get _headerTop => context.isDarkMode
+      ? Color.alphaBlend(_currentColors[1].withValues(alpha: 0.22), AppColors.darkSurface)
+      : _currentColors[1];
+  Color get _lineColor =>
+      context.isDarkMode ? _currentColors[1].withValues(alpha: 0.35) : _currentColors[1];
+
   Future<void> _save() async {
     setState(() => _isSaving = true);
     final user = ref.read(authRepositoryProvider).currentUser;
@@ -146,7 +156,7 @@ class _NoteEditorSheetState extends ConsumerState<NoteEditorSheet> {
       child: Container(
         height: screenHeight * 0.88,
         decoration: BoxDecoration(
-          color: _currentColors[0],
+          color: _sheetBg,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           boxShadow: [
             BoxShadow(
@@ -164,7 +174,7 @@ class _NoteEditorSheetState extends ConsumerState<NoteEditorSheet> {
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [_currentColors[1], _currentColors[0]],
+                    colors: [_headerTop, _sheetBg],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                   ),
@@ -177,7 +187,9 @@ class _NoteEditorSheetState extends ConsumerState<NoteEditorSheet> {
                         width: 36,
                         height: 4,
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.18),
+                          color: context.isDarkMode
+                              ? Colors.white.withValues(alpha: 0.3)
+                              : Colors.black.withValues(alpha: 0.18),
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -207,7 +219,9 @@ class _NoteEditorSheetState extends ConsumerState<NoteEditorSheet> {
                                 gradient: LinearGradient(colors: [colors[0], colors[1]]),
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: isSelected ? AppColors.text : Colors.white,
+                                  color: isSelected
+                                      ? context.appTextColor
+                                      : (context.isDarkMode ? AppColors.darkTextFaint : Colors.white),
                                   width: isSelected ? 2.2 : 1.2,
                                 ),
                                 boxShadow: isSelected
@@ -235,17 +249,17 @@ class _NoteEditorSheetState extends ConsumerState<NoteEditorSheet> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: context.cardBgColor,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: _currentColors[1], width: 1.2),
-                          boxShadow: const [AppColors.softShadow],
+                          border: Border.all(color: _lineColor, width: 1.2),
+                          boxShadow: context.isDarkMode ? null : const [AppColors.softShadow],
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(_selectedIcon, style: const TextStyle(fontSize: 20)),
                             const SizedBox(width: 4),
-                            const Icon(Icons.arrow_drop_down_rounded, size: 18, color: AppColors.textMuted),
+                            Icon(Icons.arrow_drop_down_rounded, size: 18, color: context.appTextMutedColor),
                           ],
                         ),
                       ),
@@ -270,14 +284,14 @@ class _NoteEditorSheetState extends ConsumerState<NoteEditorSheet> {
                                 setState(() => _selectedCategory = cat);
                               },
                               selectedColor: AppColors.accent,
-                              backgroundColor: Colors.white,
+                              backgroundColor: context.cardBgColor,
                               side: BorderSide(
-                                color: isSelected ? AppColors.accent : _currentColors[1],
+                                color: isSelected ? AppColors.accent : _lineColor,
                                 width: 1,
                               ),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                               labelStyle: TextStyle(
-                                color: isSelected ? Colors.white : AppColors.textSecondary,
+                                color: isSelected ? Colors.white : context.appTextMutedColor,
                                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                                 fontSize: 12,
                               ),
@@ -302,10 +316,10 @@ class _NoteEditorSheetState extends ConsumerState<NoteEditorSheet> {
                       // Note Title TextField (Clean borderless, no clipping!)
                       TextField(
                         controller: _titleController,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.text,
+                          color: context.appTextColor,
                           letterSpacing: -0.3,
                           height: 1.3,
                         ),
@@ -331,7 +345,7 @@ class _NoteEditorSheetState extends ConsumerState<NoteEditorSheet> {
                       ),
                       const SizedBox(height: 2),
                       Divider(
-                        color: _currentColors[1].withValues(alpha: 0.9),
+                        color: _lineColor.withValues(alpha: 0.9),
                         thickness: 1,
                         height: 14,
                       ),
@@ -339,9 +353,9 @@ class _NoteEditorSheetState extends ConsumerState<NoteEditorSheet> {
                       // Note Body TextField
                       TextField(
                         controller: _contentController,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
-                          color: AppColors.text,
+                          color: context.appTextColor,
                           height: 1.6,
                         ),
                         decoration: InputDecoration(
@@ -373,8 +387,8 @@ class _NoteEditorSheetState extends ConsumerState<NoteEditorSheet> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border(top: BorderSide(color: _currentColors[1], width: 0.9)),
+                  color: context.cardBgColor,
+                  border: Border(top: BorderSide(color: _lineColor, width: 0.9)),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.04),
@@ -405,8 +419,8 @@ class _NoteEditorSheetState extends ConsumerState<NoteEditorSheet> {
                       OutlinedButton(
                         onPressed: () => Navigator.pop(context),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.textSecondary,
-                          side: const BorderSide(color: AppColors.border),
+                          foregroundColor: context.appTextMutedColor,
+                          side: BorderSide(color: context.appBorderColor),
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
@@ -442,7 +456,7 @@ class _NoteEditorSheetState extends ConsumerState<NoteEditorSheet> {
   void _showIconPicker() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: context.cardBgColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -455,7 +469,7 @@ class _NoteEditorSheetState extends ConsumerState<NoteEditorSheet> {
             children: [
               Text(
                 context.l10n.isVietnamese ? 'Chọn biểu tượng' : 'Choose Icon',
-                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.text),
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: context.appTextColor),
               ),
               const SizedBox(height: 16),
               GridView.builder(
@@ -478,10 +492,10 @@ class _NoteEditorSheetState extends ConsumerState<NoteEditorSheet> {
                     },
                     child: Container(
                       decoration: BoxDecoration(
-                        color: isSelected ? AppColors.accent.withValues(alpha: 0.12) : AppColors.bgAlt,
+                        color: isSelected ? AppColors.accent.withValues(alpha: 0.12) : context.subtleBgColor,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isSelected ? AppColors.accent : AppColors.border,
+                          color: isSelected ? AppColors.accent : context.appBorderColor,
                           width: isSelected ? 1.5 : 1,
                         ),
                       ),

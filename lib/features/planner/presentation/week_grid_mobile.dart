@@ -231,20 +231,20 @@ class _WeekGridMobileState extends ConsumerState<WeekGridMobile> {
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 'Chưa có nhóm công việc nào',
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.text,
+                  color: context.appTextColor,
                   letterSpacing: -0.3,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Tạo nhóm đầu tiên (như Công việc, Học tập, Dự án...) để bắt đầu lên kế hoạch tuần này.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textMuted, fontSize: 13, height: 1.5),
+                style: TextStyle(color: context.appTextMutedColor, fontSize: 13, height: 1.5),
               ),
               const SizedBox(height: 24),
               FilledButton.icon(
