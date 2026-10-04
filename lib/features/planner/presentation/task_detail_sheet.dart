@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/week_helper.dart';
 import '../../auth/data/auth_repository.dart';
 import '../data/planner_repository.dart';
 import '../data/work_item_model.dart';
@@ -33,6 +35,7 @@ class _TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
   late WorkItemStatus _selectedStatus;
   bool _isSaving = false;
   bool _isDeleting = false;
+  bool _isMoving = false;
 
   @override
   void initState() {
@@ -106,14 +109,60 @@ class _TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
     if (mounted) setState(() => _isDeleting = false);
   }
 
+  Future<void> _moveToWeek(String targetWeek, String weekLabel) async {
+    setState(() => _isMoving = true);
+    final user = ref.read(authRepositoryProvider).currentUser;
+    if (user != null) {
+      final messenger = ScaffoldMessenger.of(context);
+      final oldWeek = widget.workItem.weekStartDate;
+      final taskContent = widget.workItem.content;
+      try {
+        await ref.read(plannerRepositoryProvider).moveWorkItemToWeek(
+          user.uid,
+          widget.workItem.id,
+          targetWeek,
+        );
+        if (mounted) {
+          Navigator.pop(context);
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text('Đã dời "$taskContent" sang $weekLabel'),
+              action: SnackBarAction(
+                label: 'Hoàn tác',
+                onPressed: () async {
+                  await ref.read(plannerRepositoryProvider).moveWorkItemToWeek(
+                    user.uid,
+                    widget.workItem.id,
+                    oldWeek,
+                  );
+                },
+              ),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          messenger.showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+        }
+      }
+    }
+    if (mounted) setState(() => _isMoving = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final currentWeekStart = WeekHelper.getStartOfWeek(DateTime.now());
+    final currentWeekStr = WeekHelper.toWeekStartStr(currentWeekStart);
+    final nextWeekStr = WeekHelper.toWeekStartStr(currentWeekStart.add(const Duration(days: 7)));
+    final isPast = widget.isPast ||
+        (widget.weekStartDate.isNotEmpty && widget.weekStartDate.compareTo(currentWeekStr) < 0);
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: context.cardBgColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.only(bottom: bottomInset),
       child: DraggableScrollableSheet(
@@ -131,7 +180,7 @@ class _TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.border,
+                    color: context.appBorderColor,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -180,11 +229,34 @@ class _TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
                   children: [
                     const SizedBox(height: 8),
 
+                    if (isPast)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: context.subtleBgColor,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: context.appBorderColor),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.history_rounded, size: 18, color: AppColors.textMuted),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                context.l10n.pastWeekTaskNotice,
+                                style: const TextStyle(fontSize: 12.5, color: AppColors.textMuted, height: 1.3),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
                     // ─── Task Content ──────────────────────────────────
                     TextField(
                       controller: _contentController,
-                      enabled: !widget.isPast,
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.text),
+                      enabled: !isPast,
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: context.appTextColor),
                       decoration: const InputDecoration(
                         hintText: 'Tên công việc...',
                         border: InputBorder.none,
@@ -199,7 +271,7 @@ class _TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
                     // ─── Status Selector ───────────────────────────────
                     const Text('Trạng thái', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textMuted, letterSpacing: 0.5)),
                     const SizedBox(height: 8),
-                    _buildStatusSelector(),
+                    _buildStatusSelector(isPast),
 
                     const SizedBox(height: 20),
 
@@ -208,16 +280,16 @@ class _TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
                     const SizedBox(height: 8),
                     Container(
                       decoration: BoxDecoration(
-                        color: AppColors.bgAlt,
+                        color: context.subtleBgColor,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border),
+                        border: Border.all(color: context.appBorderColor),
                       ),
                       child: TextField(
                         controller: _noteController,
-                        enabled: !widget.isPast,
+                        enabled: !isPast,
                         maxLines: 6,
                         minLines: 3,
-                        style: const TextStyle(fontSize: 14, color: AppColors.text, height: 1.5),
+                        style: TextStyle(fontSize: 14, color: context.appTextColor, height: 1.5),
                         decoration: const InputDecoration(
                           hintText: 'Ghi chú thêm...',
                           hintStyle: TextStyle(color: AppColors.textFaint),
@@ -230,29 +302,96 @@ class _TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
                     const SizedBox(height: 28),
 
                     // ─── Action Buttons ────────────────────────────────
-                    if (!widget.isPast) ...[
+                    if (isPast) ...[
                       Row(
                         children: [
                           // Delete button
                           OutlinedButton.icon(
-                            onPressed: _isDeleting ? null : _delete,
+                            onPressed: (_isDeleting || _isMoving) ? null : _delete,
                             icon: _isDeleting
                                 ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
                                 : const Icon(Icons.delete_outline, size: 18),
-                            label: const Text('Xóa'),
+                            label: Text(context.l10n.delete),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: Colors.red.shade700,
                               side: BorderSide(color: Colors.red.shade200),
                             ),
                           ),
                           const Spacer(),
+                          PopupMenuButton<String>(
+                            tooltip: 'Tùy chọn khác',
+                            icon: const Icon(Icons.more_horiz_rounded, color: AppColors.textMuted),
+                            onSelected: (targetWeek) => _moveToWeek(
+                              targetWeek,
+                              targetWeek == currentWeekStr ? 'tuần này' : 'tuần sau',
+                            ),
+                            itemBuilder: (context) => [
+                              PopupMenuItem(
+                                value: nextWeekStr,
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.next_plan_outlined, size: 18, color: AppColors.accent),
+                                    const SizedBox(width: 8),
+                                    Text(context.l10n.moveToNextWeek),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 4),
+                          FilledButton.icon(
+                            onPressed: (_isDeleting || _isMoving) ? null : () => _moveToWeek(currentWeekStr, 'tuần này'),
+                            icon: _isMoving
+                                ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                : const Icon(Icons.redo_rounded, size: 18),
+                            label: Text(context.l10n.moveToCurrentWeek),
+                            style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                    ] else ...[
+                      Row(
+                        children: [
+                          // Delete button
+                          OutlinedButton.icon(
+                            onPressed: (_isDeleting || _isMoving || _isSaving) ? null : _delete,
+                            icon: _isDeleting
+                                ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                                : const Icon(Icons.delete_outline, size: 18),
+                            label: Text(context.l10n.delete),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.red.shade700,
+                              side: BorderSide(color: Colors.red.shade200),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Move to next week quick option
+                          PopupMenuButton<String>(
+                            tooltip: context.l10n.moveToNextWeek,
+                            icon: const Icon(Icons.schedule_send_outlined, color: AppColors.textMuted, size: 20),
+                            onSelected: (targetWeek) => _moveToWeek(targetWeek, 'tuần sau'),
+                            itemBuilder: (context) => [
+                              PopupMenuItem(
+                                value: nextWeekStr,
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.next_plan_outlined, size: 18, color: AppColors.accent),
+                                    const SizedBox(width: 8),
+                                    Text(context.l10n.moveToNextWeek),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Spacer(),
                           // Save button
                           FilledButton.icon(
-                            onPressed: _isSaving ? null : _save,
+                            onPressed: (_isSaving || _isMoving || _isDeleting) ? null : _save,
                             icon: _isSaving
                                 ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                                 : const Icon(Icons.save_outlined, size: 18),
-                            label: const Text('Lưu'),
+                            label: Text(context.l10n.save),
                             style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
                           ),
                         ],
@@ -269,7 +408,7 @@ class _TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
     );
   }
 
-  Widget _buildStatusSelector() {
+  Widget _buildStatusSelector(bool isPast) {
     return Row(
       children: WorkItemStatus.values.map((status) {
         final isSelected = _selectedStatus == status;
@@ -334,7 +473,7 @@ class _TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
 
         return Expanded(
           child: GestureDetector(
-            onTap: widget.isPast ? null : () {
+            onTap: isPast ? null : () {
               HapticFeedback.selectionClick();
               setState(() => _selectedStatus = status);
             },
@@ -343,10 +482,10 @@ class _TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
               margin: const EdgeInsets.only(right: 8),
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: isSelected ? color.withValues(alpha: 0.1) : AppColors.bgAlt,
+                color: isSelected ? color.withValues(alpha: 0.1) : context.subtleBgColor,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isSelected ? color : AppColors.border,
+                  color: isSelected ? color : context.appBorderColor,
                   width: isSelected ? 1.5 : 1,
                 ),
               ),

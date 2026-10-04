@@ -55,15 +55,15 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.cardBgColor,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.border, width: 0.8),
+              border: Border.all(color: context.appBorderColor, width: 0.8),
               boxShadow: const [AppColors.softShadow],
             ),
             child: TextField(
               controller: _searchController,
               onChanged: (v) => setState(() => _searchQuery = v.trim().toLowerCase()),
-              style: const TextStyle(fontSize: 14, color: AppColors.text),
+              style: TextStyle(fontSize: 14, color: context.appTextColor),
               decoration: InputDecoration(
                 hintText: 'Tìm kiếm tiêu đề, nội dung ghi chú...',
                 hintStyle: const TextStyle(color: AppColors.textFaint, fontSize: 13.5),
@@ -107,14 +107,14 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                   setState(() => _selectedCategory = cat);
                 },
                 selectedColor: AppColors.accent.withValues(alpha: 0.12),
-                backgroundColor: Colors.white,
+                backgroundColor: context.cardBgColor,
                 side: BorderSide(
-                  color: isSelected ? AppColors.accent : AppColors.border,
+                  color: isSelected ? AppColors.accent : context.appBorderColor,
                   width: isSelected ? 1.2 : 0.8,
                 ),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 labelStyle: TextStyle(
-                  color: isSelected ? AppColors.accent : AppColors.textMuted,
+                  color: isSelected ? AppColors.accent : context.appTextMutedColor,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   fontSize: 12.5,
                 ),
@@ -263,7 +263,7 @@ class _NoteCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardBgColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: colors[1], width: 1.2),
         boxShadow: const [AppColors.softShadow],
@@ -320,10 +320,10 @@ class _NoteCard extends StatelessWidget {
                 if (note.title.isNotEmpty) ...[
                   Text(
                     note.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 14.5,
-                      color: AppColors.text,
+                      color: context.appTextColor,
                       letterSpacing: -0.2,
                       height: 1.3,
                     ),
@@ -337,9 +337,9 @@ class _NoteCard extends StatelessWidget {
                 if (note.content.isNotEmpty)
                   Text(
                     note.content,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12.5,
-                      color: AppColors.textSecondary,
+                      color: context.appTextMutedColor,
                       height: 1.4,
                     ),
                     overflow: TextOverflow.ellipsis,

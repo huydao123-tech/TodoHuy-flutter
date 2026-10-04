@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/week_helper.dart';
 import '../../../auth/data/auth_repository.dart';
 import '../../../task_groups/data/task_group_model.dart';
 import '../../../task_groups/data/task_group_repository.dart';
@@ -86,6 +88,43 @@ class _GoalCardState extends ConsumerState<GoalCard> {
   void _onStatusLongPress(String userId, WorkItemModel item) {
     if (item.status == WorkItemStatus.DONE) {
       _cycleStatus(userId, item);
+    }
+  }
+
+  Future<void> _quickMoveToCurrentWeek(String userId, WorkItemModel item) async {
+    HapticFeedback.lightImpact();
+    final currentWeekStr = WeekHelper.toWeekStartStr(DateTime.now());
+    final oldWeek = item.weekStartDate;
+    try {
+      await ref.read(plannerRepositoryProvider).moveWorkItemToWeek(
+        userId,
+        item.id,
+        currentWeekStr,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Đã dời "${item.content}" sang tuần này'),
+            action: SnackBarAction(
+              label: 'Hoàn tác',
+              onPressed: () async {
+                await ref.read(plannerRepositoryProvider).moveWorkItemToWeek(
+                  userId,
+                  item.id,
+                  oldWeek,
+                );
+              },
+            ),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi: $e')),
+        );
+      }
     }
   }
 
@@ -180,9 +219,9 @@ class _GoalCardState extends ConsumerState<GoalCard> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardBgColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border, width: 0.8),
+        border: Border.all(color: context.appBorderColor, width: 0.8),
         boxShadow: const [AppColors.softShadow],
       ),
       child: Column(
@@ -191,7 +230,7 @@ class _GoalCardState extends ConsumerState<GoalCard> {
           // ─── Card Header ───────────────────────────────────────────
           _buildHeader(incompleteCount, groupItems.length),
 
-          const Divider(height: 1, color: AppColors.border),
+          Divider(height: 1, color: context.appBorderColor),
 
           // ─── Work Items List ────────────────────────────────────────
           itemsAsync.when(
@@ -256,20 +295,20 @@ class _GoalCardState extends ConsumerState<GoalCard> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.subtleBgColor,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: context.appBorderColor),
               ),
-              child: const Text('Tuần cũ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textMuted)),
+              child: Text('Tuần cũ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: context.appTextMutedColor)),
             )
           else ...[
             if (totalCount > 0)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: context.subtleBgColor,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.border.withValues(alpha: 0.6)),
+                  border: Border.all(color: context.appBorderColor.withValues(alpha: 0.6)),
                 ),
                 child: Text(
                   incompleteCount == 0 ? '✓ Xong' : '$incompleteCount còn lại',
@@ -286,7 +325,7 @@ class _GoalCardState extends ConsumerState<GoalCard> {
               tooltip: 'Thêm công việc',
               visualDensity: VisualDensity.compact,
               style: IconButton.styleFrom(
-                backgroundColor: Colors.white,
+                backgroundColor: context.subtleBgColor,
                 padding: const EdgeInsets.all(6),
                 minimumSize: const Size(30, 30),
               ),
@@ -345,21 +384,34 @@ class _GoalCardState extends ConsumerState<GoalCard> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: isDone ? FontWeight.normal : FontWeight.w500,
-                      color: isDone ? AppColors.textMuted : AppColors.text,
+                      color: isDone ? context.appTextMutedColor : context.appTextColor,
                       decoration: isDone ? TextDecoration.lineThrough : null,
-                      decorationColor: AppColors.textMuted,
+                      decorationColor: context.appTextMutedColor,
                       height: 1.3,
                     ),
                   ),
                 ),
-                // Trailing: note indicator or chevron
+                // Trailing: note indicator or quick move button or chevron
                 if (item.note.isNotEmpty)
                   const Padding(
                     padding: EdgeInsets.only(left: 6),
                     child: Icon(Icons.sticky_note_2_outlined, size: 15, color: AppColors.textFaint),
                   ),
-                const SizedBox(width: 4),
-                const Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.textFaint),
+                if (widget.isPast && !isDone)
+                  IconButton(
+                    icon: const Icon(Icons.redo_rounded, size: 18, color: AppColors.accent),
+                    tooltip: context.l10n.moveToCurrentWeek,
+                    visualDensity: VisualDensity.compact,
+                    style: IconButton.styleFrom(
+                      padding: const EdgeInsets.all(4),
+                      minimumSize: const Size(28, 28),
+                    ),
+                    onPressed: () => _quickMoveToCurrentWeek(userId, item),
+                  )
+                else ...[
+                  const SizedBox(width: 4),
+                  const Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.textFaint),
+                ],
               ],
             ),
           ),
@@ -370,8 +422,8 @@ class _GoalCardState extends ConsumerState<GoalCard> {
 
   Widget _buildAddTaskRow(String userId) {
     return Container(
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.border, width: 0.8)),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: context.appBorderColor, width: 0.8)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       child: Row(
@@ -383,7 +435,7 @@ class _GoalCardState extends ConsumerState<GoalCard> {
               key: _addFieldKey,
               controller: _addController,
               focusNode: _addFocusNode,
-              style: const TextStyle(fontSize: 14, color: AppColors.text),
+              style: TextStyle(fontSize: 14, color: context.appTextColor),
               decoration: const InputDecoration(
                 hintText: 'Thêm công việc...',
                 hintStyle: TextStyle(color: AppColors.textFaint, fontSize: 13.5),

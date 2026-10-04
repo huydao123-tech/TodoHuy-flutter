@@ -107,9 +107,9 @@ class _WeekGridMobileState extends ConsumerState<WeekGridMobile> {
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardBgColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border, width: 0.8),
+        border: Border.all(color: context.appBorderColor, width: 0.8),
         boxShadow: const [AppColors.softShadow],
       ),
       child: Row(
@@ -117,11 +117,11 @@ class _WeekGridMobileState extends ConsumerState<WeekGridMobile> {
         children: [
           IconButton(
             onPressed: () => _navigatePage(-1),
-            icon: const Icon(Icons.chevron_left_rounded, color: AppColors.textSecondary, size: 22),
+            icon: Icon(Icons.chevron_left_rounded, color: context.appTextMutedColor, size: 22),
             tooltip: l10n.previousWeek,
             visualDensity: VisualDensity.compact,
             style: IconButton.styleFrom(
-              backgroundColor: AppColors.bgAlt,
+              backgroundColor: context.subtleBgColor,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
           ),
@@ -149,7 +149,7 @@ class _WeekGridMobileState extends ConsumerState<WeekGridMobile> {
                         isCurrentWeek ? l10n.currentWeek : (displayedWeek.isBefore(today) ? l10n.pastWeek : l10n.upcomingWeek),
                         style: TextStyle(
                           fontSize: 10,
-                          color: isCurrentWeek ? AppColors.accent : AppColors.textMuted,
+                          color: isCurrentWeek ? AppColors.accent : context.appTextMutedColor,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.8,
                         ),
@@ -162,10 +162,10 @@ class _WeekGridMobileState extends ConsumerState<WeekGridMobile> {
                     children: [
                       Text(
                         weekStr,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.text,
+                          color: context.appTextColor,
                           letterSpacing: -0.2,
                         ),
                       ),
@@ -195,11 +195,11 @@ class _WeekGridMobileState extends ConsumerState<WeekGridMobile> {
           ),
           IconButton(
             onPressed: () => _navigatePage(1),
-            icon: const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary, size: 22),
+            icon: Icon(Icons.chevron_right_rounded, color: context.appTextMutedColor, size: 22),
             tooltip: l10n.nextWeek,
             visualDensity: VisualDensity.compact,
             style: IconButton.styleFrom(
-              backgroundColor: AppColors.bgAlt,
+              backgroundColor: context.subtleBgColor,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
           ),

@@ -65,6 +65,11 @@ class AppLocalizations {
       isVietnamese ? 'Chọn ngôn ngữ' : 'Select Language';
   String get vietnamese => isVietnamese ? 'Tiếng Việt' : 'Vietnamese';
   String get english => isVietnamese ? 'Tiếng Anh' : 'English';
+  String get theme => isVietnamese ? 'Giao diện' : 'Theme';
+  String get themeMode => isVietnamese ? 'Chế độ giao diện' : 'Theme Mode';
+  String get lightTheme => isVietnamese ? 'Sáng' : 'Light';
+  String get darkTheme => isVietnamese ? 'Tối' : 'Dark';
+  String get systemTheme => isVietnamese ? 'Theo hệ thống' : 'System';
 
   // ─── Auth ──────────────────────────────────────────────────────────────────
   String get login => isVietnamese ? 'Đăng Nhập' : 'Log In';
@@ -201,6 +206,16 @@ class AppLocalizations {
   String get createCategoryToStart => isVietnamese
       ? 'Nhấn + ở góc trên để tạo danh mục'
       : 'Tap + above to create your first category';
+  String get moveToCurrentWeek =>
+      isVietnamese ? 'Dời sang tuần này' : 'Move to this week';
+  String get moveToNextWeek =>
+      isVietnamese ? 'Dời sang tuần sau' : 'Move to next week';
+  String taskMovedToWeek(String weekLabel) => isVietnamese
+      ? 'Đã dời công việc sang $weekLabel'
+      : 'Moved task to $weekLabel';
+  String get pastWeekTaskNotice => isVietnamese
+      ? 'Công việc thuộc tuần cũ. Bạn có thể dời sang tuần này để tiếp tục thực hiện.'
+      : 'This task is from a past week. You can move it to this week to continue working on it.';
 
   // Days
   String get mon => isVietnamese ? 'T2' : 'Mon';

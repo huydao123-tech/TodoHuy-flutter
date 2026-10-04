@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_mode_provider.dart';
+import '../../../core/theme/theme_mode_sheet.dart';
 import '../../../core/utils/week_helper.dart';
 import '../../auth/data/auth_repository.dart';
 import '../../planner/data/planner_repository.dart';
@@ -117,8 +119,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           setState(() => _currentIndex = index);
         },
         selectedItemColor: AppColors.accent,
-        unselectedItemColor: AppColors.textMuted,
-        backgroundColor: Colors.white,
+        unselectedItemColor: context.appTextMutedColor,
+        backgroundColor: context.cardBgColor,
         elevation: 0,
         type: BottomNavigationBarType.fixed,
         selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5, letterSpacing: -0.2),
@@ -173,7 +175,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       leading: Builder(
         builder: (context) => IconButton(
           icon: const Icon(Icons.menu),
-          color: AppColors.text,
+          color: context.appTextColor,
           tooltip: 'Menu',
           onPressed: () {
             HapticFeedback.lightImpact();
@@ -187,28 +189,40 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w800,
-              color: AppColors.text,
+              color: context.appTextColor,
               fontSize: 19,
               letterSpacing: -0.5,
             ),
           ),
           Text(
             subtitle,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w500,
-              color: AppColors.textMuted,
+              color: context.appTextMutedColor,
             ),
           ),
         ],
       ),
-      backgroundColor: AppColors.bg,
+      backgroundColor: context.scaffoldBgColor,
       elevation: 0,
       scrolledUnderElevation: 0,
       surfaceTintColor: Colors.transparent,
       actions: [
+        IconButton(
+          icon: Icon(
+            context.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+            color: context.appTextColor,
+            size: 20,
+          ),
+          tooltip: context.l10n.themeMode,
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            ref.read(themeModeProvider.notifier).toggleTheme(context);
+          },
+        ),
         Builder(
           builder: (context) => Padding(
             padding: const EdgeInsets.only(right: 12),
@@ -398,9 +412,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final l10n = context.l10n;
     final user = ref.watch(authRepositoryProvider).currentUser;
     final taskGroupsAsync = ref.watch(taskGroupsProvider);
+    final currentThemeMode = ref.watch(themeModeProvider);
 
     return Drawer(
-      backgroundColor: Colors.white,
+      backgroundColor: context.cardBgColor,
       surfaceTintColor: Colors.transparent,
       child: SafeArea(
         child: Column(
@@ -409,8 +424,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             // ─── Linear Style User Profile Header ────────────────────
             Container(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: AppColors.border, width: 0.8)),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: context.appBorderColor, width: 0.8)),
               ),
               child: Row(
                 children: [
@@ -447,8 +462,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       children: [
                         Text(
                           user?.displayName ?? 'Người dùng',
-                          style: const TextStyle(
-                            color: AppColors.text,
+                          style: TextStyle(
+                            color: context.appTextColor,
                             fontWeight: FontWeight.w700,
                             fontSize: 15,
                             letterSpacing: -0.3,
@@ -459,7 +474,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         const SizedBox(height: 2),
                         Text(
                           user?.email ?? '',
-                          style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                          style: TextStyle(color: context.appTextMutedColor, fontSize: 12),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -475,12 +490,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               padding: const EdgeInsets.fromLTRB(18, 16, 12, 6),
               child: Row(
                 children: [
-                  const Text(
+                  Text(
                     'NHÓM CÔNG VIỆC',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textMuted,
+                      color: context.appTextMutedColor,
                       letterSpacing: 0.8,
                     ),
                   ),
@@ -548,7 +563,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             ),
                             title: Text(
                               g.name,
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.text),
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: context.appTextColor),
                             ),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -578,9 +593,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     },
                   ),
 
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Divider(color: AppColors.border, height: 1),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Divider(color: context.appBorderColor, height: 1),
                   ),
 
                   // ─── Tools & Utilities ────────────────────────────────────
@@ -588,10 +603,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     padding: const EdgeInsets.fromLTRB(18, 8, 12, 6),
                     child: Text(
                       l10n.utilitiesSection,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textMuted,
+                        color: context.appTextMutedColor,
                         letterSpacing: 0.8,
                       ),
                     ),
@@ -600,7 +615,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     dense: true,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 18),
                     leading: const Icon(Icons.bookmark_border_rounded, color: AppColors.textSecondary, size: 20),
-                    title: Text(l10n.resourcesAndLinks, style: const TextStyle(color: AppColors.text, fontSize: 14, fontWeight: FontWeight.w500)),
+                    title: Text(l10n.resourcesAndLinks, style: TextStyle(color: context.appTextColor, fontSize: 14, fontWeight: FontWeight.w500)),
                     onTap: () {
                       Navigator.pop(context);
                       showModalBottomSheet(
@@ -615,7 +630,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     dense: true,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 18),
                     leading: const Icon(Icons.delete_outline_rounded, color: AppColors.textSecondary, size: 20),
-                    title: Text(l10n.trash, style: const TextStyle(color: AppColors.text, fontSize: 14, fontWeight: FontWeight.w500)),
+                    title: Text(l10n.trash, style: TextStyle(color: context.appTextColor, fontSize: 14, fontWeight: FontWeight.w500)),
                     onTap: () {
                       Navigator.pop(context);
                       showModalBottomSheet(
@@ -630,13 +645,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     dense: true,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 18),
                     leading: const Icon(Icons.language_rounded, color: AppColors.textSecondary, size: 20),
-                    title: Text(l10n.language, style: const TextStyle(color: AppColors.text, fontSize: 14, fontWeight: FontWeight.w500)),
+                    title: Text(l10n.language, style: TextStyle(color: context.appTextColor, fontSize: 14, fontWeight: FontWeight.w500)),
                     trailing: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.bgAlt,
+                        color: context.isDarkMode ? AppColors.darkSurfaceSubtle : AppColors.bgAlt,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppColors.border, width: 0.8),
+                        border: Border.all(color: context.appBorderColor, width: 0.8),
                       ),
                       child: Text(
                         ref.watch(currentAppLanguageProvider) == AppLanguage.vi ? '🇻🇳 Tiếng Việt' : '🇬🇧 English',
@@ -651,15 +666,45 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ListTile(
                     dense: true,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 18),
+                    leading: Icon(
+                      currentThemeMode == ThemeMode.dark
+                          ? Icons.dark_mode_rounded
+                          : (currentThemeMode == ThemeMode.light ? Icons.light_mode_rounded : Icons.brightness_auto_rounded),
+                      color: AppColors.textSecondary,
+                      size: 20,
+                    ),
+                    title: Text(l10n.theme, style: TextStyle(color: context.appTextColor, fontSize: 14, fontWeight: FontWeight.w500)),
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: context.isDarkMode ? AppColors.darkSurfaceSubtle : AppColors.bgAlt,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: context.appBorderColor, width: 0.8),
+                      ),
+                      child: Text(
+                        currentThemeMode == ThemeMode.dark
+                            ? '🌙 ${l10n.darkTheme}'
+                            : (currentThemeMode == ThemeMode.light ? '☀️ ${l10n.lightTheme}' : '📱 ${l10n.systemTheme}'),
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.accent),
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      showThemeModeSelectionSheet(context);
+                    },
+                  ),
+                  ListTile(
+                    dense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 18),
                     leading: const Icon(Icons.system_update_alt_rounded, color: AppColors.textSecondary, size: 20),
-                    title: Text(l10n.checkForUpdates, style: const TextStyle(color: AppColors.text, fontSize: 14, fontWeight: FontWeight.w500)),
+                    title: Text(l10n.checkForUpdates, style: TextStyle(color: context.appTextColor, fontSize: 14, fontWeight: FontWeight.w500)),
                     onTap: () => _manualCheckUpdate(context),
                   ),
                 ],
               ),
             ),
 
-            const Divider(color: AppColors.border, height: 1),
+            Divider(color: context.appBorderColor, height: 1),
 
             // ─── Logout & Version ─────────────────────────────────────
             Padding(

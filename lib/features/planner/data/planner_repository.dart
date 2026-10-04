@@ -131,6 +131,12 @@ class PlannerRepository {
     });
   }
 
+  Future<void> moveWorkItemToWeek(String userId, String itemId, String targetWeekStartDate) async {
+    await updateWorkItem(userId, itemId, {
+      'weekStartDate': targetWeekStartDate,
+    });
+  }
+
   Future<void> deleteWorkItem(String userId, String itemId) async {
     await _firestore
         .collection('users')

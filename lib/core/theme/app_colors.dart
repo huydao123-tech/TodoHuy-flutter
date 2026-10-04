@@ -53,3 +53,16 @@ class AppColors {
     offset: Offset(0, 6),
   );
 }
+
+extension AppThemeColors on BuildContext {
+  bool get isDarkMode => Theme.of(this).brightness == Brightness.dark;
+
+  Color get cardBgColor => isDarkMode ? AppColors.darkSurface : AppColors.surface;
+  Color get scaffoldBgColor => isDarkMode ? AppColors.darkBg : AppColors.bg;
+  Color get surfaceSubtleColor => isDarkMode ? AppColors.darkSurfaceSubtle : AppColors.surfaceSubtle;
+  Color get subtleBgColor => isDarkMode ? AppColors.darkSurfaceSubtle : AppColors.bgAlt;
+  Color get appBorderColor => isDarkMode ? AppColors.darkBorder : AppColors.border;
+  Color get appTextColor => isDarkMode ? AppColors.darkText : AppColors.text;
+  Color get appTextMutedColor => isDarkMode ? AppColors.darkTextMuted : AppColors.textMuted;
+  Color get appTextFaintColor => isDarkMode ? AppColors.darkTextFaint : AppColors.textFaint;
+}

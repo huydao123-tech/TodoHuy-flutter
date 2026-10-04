@@ -64,5 +64,11 @@ void main() {
       expect(monday.day, 29);
       expect(monday.weekday, DateTime.monday);
     });
+
+    test('toWeekStartStr returns formatted YYYY-MM-DD for the Monday of that week', () {
+      final wednesday = DateTime(2026, 9, 9);
+      final weekStartStr = WeekHelper.toWeekStartStr(wednesday);
+      expect(weekStartStr, '2026-09-07');
+    });
   });
 }

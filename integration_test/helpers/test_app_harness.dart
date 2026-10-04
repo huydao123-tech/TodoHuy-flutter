@@ -234,6 +234,44 @@ class FakePlannerRepository extends Mock implements PlannerRepository {
   }
 
   @override
+  Future<void> updateWorkItem(String userId, String itemId, Map<String, dynamic> data) async {
+    final idx = workItems.indexWhere((i) => i.id == itemId);
+    if (idx != -1) {
+      final current = workItems[idx];
+      final oldWeek = current.weekStartDate;
+      final newWeek = data['weekStartDate'] as String? ?? oldWeek;
+
+      WorkItemStatus newStatus = current.status;
+      if (data.containsKey('status')) {
+        final statusStr = data['status'] as String;
+        newStatus = WorkItemStatus.values.firstWhere((s) => s.name == statusStr, orElse: () => current.status);
+      }
+
+      workItems[idx] = WorkItemModel(
+        id: current.id,
+        taskGroupId: data['taskGroupId'] as String? ?? current.taskGroupId,
+        weekStartDate: newWeek,
+        content: data['content'] as String? ?? current.content,
+        status: newStatus,
+        note: data['note'] as String? ?? current.note,
+        createdAt: current.createdAt,
+        updatedAt: DateTime.now(),
+      );
+      _notifyWeek(oldWeek);
+      if (newWeek != oldWeek) {
+        _notifyWeek(newWeek);
+      }
+    }
+  }
+
+  @override
+  Future<void> moveWorkItemToWeek(String userId, String itemId, String targetWeekStartDate) async {
+    await updateWorkItem(userId, itemId, {
+      'weekStartDate': targetWeekStartDate,
+    });
+  }
+
+  @override
   Future<void> deleteWorkItem(String userId, String itemId) async {
     final idx = workItems.indexWhere((i) => i.id == itemId);
     if (idx != -1) {

@@ -18,6 +18,11 @@ class WeekHelper {
     final format = DateFormat('dd/MM');
     return '${format.format(start)} - ${format.format(end)}';
   }
+
+  static String toWeekStartStr(DateTime date) {
+    final start = getStartOfWeek(date);
+    return '${start.year}-${start.month.toString().padLeft(2, '0')}-${start.day.toString().padLeft(2, '0')}';
+  }
 }
 
 // State provider for selected week

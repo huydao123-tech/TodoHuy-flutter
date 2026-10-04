@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'core/theme/app_colors.dart';
+import 'core/theme/theme_mode_provider.dart';
 import 'firebase_options.dart';
 import 'core/router/app_router.dart';
 import 'core/localization/app_localizations.dart';
@@ -29,6 +30,7 @@ class TodoHuyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     final locale = ref.watch(localeProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
       title: 'WeekLoop',
@@ -44,7 +46,7 @@ class TodoHuyApp extends ConsumerWidget {
       ],
       theme: _buildLightTheme(),
       darkTheme: _buildDarkTheme(),
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
     );
   }
 
