@@ -39,9 +39,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   void initState() {
     super.initState();
     _loadAppVersion();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkUpdateOnStartup();
-    });
   }
 
   Future<void> _loadAppVersion() async {
@@ -53,13 +50,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         });
       }
     } catch (_) {}
-  }
-
-  Future<void> _checkUpdateOnStartup() async {
-    final info = await AppUpdater.checkForUpdate();
-    if (info.hasUpdate && mounted) {
-      UpdateDialog.show(context, info);
-    }
   }
 
   Future<void> _manualCheckUpdate(BuildContext context) async {
