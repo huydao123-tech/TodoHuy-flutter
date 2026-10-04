@@ -54,6 +54,7 @@ class AppUpdater {
         url,
         headers: {
           'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'WeekLoop-App/$currentVerStr',
         },
       ).timeout(const Duration(seconds: 10));
 
