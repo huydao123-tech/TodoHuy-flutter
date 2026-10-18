@@ -26,12 +26,12 @@ class TaskGroupRepository {
         .where('isArchived', isEqualTo: false)
         .snapshots()
         .map((snapshot) {
-          final items = snapshot.docs
-              .map((doc) => TaskGroupModel.fromFirestore(doc))
-              .toList();
-          items.sort((a, b) => a.displayOrder.compareTo(b.displayOrder));
-          return items;
-        });
+      final items = snapshot.docs
+          .map((doc) => TaskGroupModel.fromFirestore(doc))
+          .toList();
+      items.sort((a, b) => a.displayOrder.compareTo(b.displayOrder));
+      return items;
+    });
   }
 
   Stream<List<TaskGroupModel>> watchArchivedTaskGroups(String userId) {
@@ -42,15 +42,17 @@ class TaskGroupRepository {
         .where('isArchived', isEqualTo: true)
         .snapshots()
         .map((snapshot) {
-          final items = snapshot.docs
-              .map((doc) => TaskGroupModel.fromFirestore(doc))
-              .toList();
-          items.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-          return items;
-        });
+      final items = snapshot.docs
+          .map((doc) => TaskGroupModel.fromFirestore(doc))
+          .toList();
+      items.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+      return items;
+    });
   }
 
-  Future<void> createTaskGroup(String userId, String name, String color, int displayOrder, {TaskGroupType type = TaskGroupType.MAIN}) async {
+  Future<void> createTaskGroup(
+      String userId, String name, String color, int displayOrder,
+      {TaskGroupType type = TaskGroupType.MAIN}) async {
     final group = TaskGroupModel(
       id: '',
       name: name,
@@ -68,7 +70,8 @@ class TaskGroupRepository {
         .add(group.toFirestore());
   }
 
-  Future<void> updateTaskGroup(String userId, String groupId, Map<String, dynamic> data) async {
+  Future<void> updateTaskGroup(
+      String userId, String groupId, Map<String, dynamic> data) async {
     data['updatedAt'] = FieldValue.serverTimestamp();
     await _firestore
         .collection('users')
@@ -83,6 +86,21 @@ class TaskGroupRepository {
       'isArchived': true,
       'archivedAt': FieldValue.serverTimestamp(),
     });
+  }
+
+  /// Save the whole priority order atomically so listeners never see half a reorder.
+  Future<void> reorderTaskGroups(String userId, List<String> groupIds) async {
+    if (groupIds.isEmpty) return;
+    final batch = _firestore.batch();
+    final collection =
+        _firestore.collection('users').doc(userId).collection('task_groups');
+    for (var index = 0; index < groupIds.length; index++) {
+      batch.update(collection.doc(groupIds[index]), {
+        'displayOrder': index + 1,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+    await batch.commit();
   }
 
   Future<void> restoreTaskGroup(String userId, String groupId) async {

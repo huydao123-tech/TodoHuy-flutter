@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/week_helper.dart';
 import '../../task_groups/data/task_group_model.dart';
+import '../../task_groups/presentation/group_priority_sheet.dart';
 import '../data/planner_repository.dart';
 import 'widgets/goal_card.dart';
 import '../../../core/localization/app_localizations.dart';
@@ -62,6 +63,27 @@ class _WeekGridMobileState extends ConsumerState<WeekGridMobile> {
       children: [
         // ─── Things 3 / Linear Week Navigator Bar ─────────────────────
         _buildWeekNavBar(baseWeek, today),
+
+        if ((taskGroupsAsync.valueOrNull?.length ?? 0) > 1)
+          Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: TextButton.icon(
+                icon: const Icon(Icons.sort_rounded, size: 20),
+                label: Text(context.l10n.isVietnamese
+                    ? 'Sắp xếp ưu tiên'
+                    : 'Group priority'),
+                onPressed: () => showModalBottomSheet<void>(
+                  context: context,
+                  isScrollControlled: true,
+                  useSafeArea: true,
+                  builder: (_) =>
+                      GroupPrioritySheet(groups: taskGroupsAsync.requireValue),
+                ),
+              ),
+            ),
+          ),
 
         // ─── PageView: 3 weeks ──────────────────────────────────────────
         Expanded(
