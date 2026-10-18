@@ -1,8 +1,12 @@
+import 'dart:io';
+import 'dart:ui' as ui;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:todohuy/core/theme/app_colors.dart';
 import 'package:todohuy/features/auth/data/auth_repository.dart';
 import 'package:todohuy/features/task_groups/data/task_group_model.dart';
 import 'package:todohuy/features/task_groups/data/task_group_repository.dart';
@@ -39,26 +43,71 @@ void main() {
     when(() => auth.currentUser).thenReturn(user);
   });
 
-  Future<void> openSheet(WidgetTester tester) async {
+  Future<void> openSheet(WidgetTester tester,
+      {Brightness brightness = Brightness.light}) async {
     await tester.pumpWidget(ProviderScope(
       overrides: [
         authRepositoryProvider.overrideWithValue(auth),
         taskGroupRepositoryProvider.overrideWithValue(repository),
       ],
       child: MaterialApp(
+          theme: ThemeData(
+            brightness: brightness,
+            bottomSheetTheme:
+                const BottomSheetThemeData(backgroundColor: Colors.transparent),
+          ),
           home: Scaffold(
+              backgroundColor: Colors.pink,
               body: Builder(
                   builder: (context) => TextButton(
                         onPressed: () => showModalBottomSheet<void>(
                           context: context,
                           isScrollControlled: true,
-                          builder: (_) => GroupPrioritySheet(groups: groups),
+                          builder: (_) => RepaintBoundary(
+                            key: const ValueKey('priority-preview'),
+                            child: GroupPrioritySheet(groups: groups),
+                          ),
                         ),
                         child: const Text('Open'),
                       )))),
     ));
     await tester.tap(find.text('Open'));
     await tester.pumpAndSettle();
+  }
+
+  for (final brightness in Brightness.values) {
+    testWidgets(
+        'priority sheet paints an opaque surface in ${brightness.name} theme',
+        (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await openSheet(tester, brightness: brightness);
+      final boundary = tester.renderObject<RenderRepaintBoundary>(
+          find.byKey(const ValueKey('priority-preview')));
+      await tester.runAsync(() async {
+        final image = await boundary.toImage(pixelRatio: 1);
+        final pixels =
+            (await image.toByteData(format: ui.ImageByteFormat.rawRgba))!;
+        final offset = ((image.height ~/ 2) * image.width + 4) * 4;
+        final expected = brightness == Brightness.dark
+            ? AppColors.darkSurface
+            : AppColors.surface;
+        expect(pixels.getUint8(offset), (expected.r * 255).round());
+        expect(pixels.getUint8(offset + 1), (expected.g * 255).round());
+        expect(pixels.getUint8(offset + 2), (expected.b * 255).round());
+        expect(pixels.getUint8(offset + 3), 255);
+        if (Platform.environment['PRIORITY_SCREENSHOTS'] == '1') {
+          final png = (await image.toByteData(format: ui.ImageByteFormat.png))!;
+          final file = File('build/qa/priority-${brightness.name}.png');
+          await file.parent.create(recursive: true);
+          await file.writeAsBytes(png.buffer.asUint8List());
+        }
+        image.dispose();
+      });
+      expect(tester.takeException(), isNull);
+    });
   }
 
   testWidgets('dragging a group to the top saves the new order and closes',
