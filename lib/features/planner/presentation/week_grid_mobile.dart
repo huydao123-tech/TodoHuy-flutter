@@ -67,10 +67,12 @@ class _WeekGridMobileState extends ConsumerState<WeekGridMobile> {
         Expanded(
           child: taskGroupsAsync.when(
             loading: () => const Center(
-              child: CircularProgressIndicator(color: AppColors.accent, strokeWidth: 2.5),
+              child: CircularProgressIndicator(
+                  color: AppColors.accent, strokeWidth: 2.5),
             ),
             error: (err, _) => Center(
-              child: Text('Lỗi: $err', style: const TextStyle(color: Colors.red)),
+              child:
+                  Text('Lỗi: $err', style: const TextStyle(color: Colors.red)),
             ),
             data: (groups) {
               return PageView.builder(
@@ -117,90 +119,114 @@ class _WeekGridMobileState extends ConsumerState<WeekGridMobile> {
         children: [
           IconButton(
             onPressed: () => _navigatePage(-1),
-            icon: Icon(Icons.chevron_left_rounded, color: context.appTextMutedColor, size: 22),
+            icon: Icon(Icons.chevron_left_rounded,
+                color: context.appTextMutedColor, size: 22),
             tooltip: l10n.previousWeek,
             visualDensity: VisualDensity.compact,
             style: IconButton.styleFrom(
               backgroundColor: context.subtleBgColor,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
           ),
-          InkWell(
-            onTap: isCurrentWeek ? null : _goToCurrentWeek,
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: isCurrentWeek ? AppColors.accent : AppColors.textFaint,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        isCurrentWeek ? l10n.currentWeek : (displayedWeek.isBefore(today) ? l10n.pastWeek : l10n.upcomingWeek),
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: isCurrentWeek ? AppColors.accent : context.appTextMutedColor,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        weekStr,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: context.appTextColor,
-                          letterSpacing: -0.2,
-                        ),
-                      ),
-                      if (!isCurrentWeek) ...[
-                        const SizedBox(width: 8),
+          Expanded(
+            child: InkWell(
+              onTap: isCurrentWeek ? null : _goToCurrentWeek,
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          width: 6,
+                          height: 6,
                           decoration: BoxDecoration(
-                            color: AppColors.accent.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            l10n.backToToday,
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: AppColors.accent,
-                              fontWeight: FontWeight.w700,
-                            ),
+                            color: isCurrentWeek
+                                ? AppColors.accent
+                                : AppColors.textFaint,
+                            shape: BoxShape.circle,
                           ),
                         ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                            child: Text(
+                          isCurrentWeek
+                              ? l10n.currentWeek
+                              : (displayedWeek.isBefore(today)
+                                  ? l10n.pastWeek
+                                  : l10n.upcomingWeek),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: isCurrentWeek
+                                ? AppColors.accent
+                                : context.appTextMutedColor,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                          ),
+                        )),
                       ],
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                            child: Text(
+                          weekStr,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: context.appTextColor,
+                            letterSpacing: -0.2,
+                          ),
+                        )),
+                        if (!isCurrentWeek) ...[
+                          const SizedBox(width: 8),
+                          Flexible(
+                              child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.accent.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              l10n.backToToday,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: AppColors.accent,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          )),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
           IconButton(
             onPressed: () => _navigatePage(1),
-            icon: Icon(Icons.chevron_right_rounded, color: context.appTextMutedColor, size: 22),
+            icon: Icon(Icons.chevron_right_rounded,
+                color: context.appTextMutedColor, size: 22),
             tooltip: l10n.nextWeek,
             visualDensity: VisualDensity.compact,
             style: IconButton.styleFrom(
               backgroundColor: context.subtleBgColor,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
           ),
         ],
@@ -208,7 +234,8 @@ class _WeekGridMobileState extends ConsumerState<WeekGridMobile> {
     );
   }
 
-  Widget _buildWeekPage(List<TaskGroupModel> groups, String weekStr, bool isPast) {
+  Widget _buildWeekPage(
+      List<TaskGroupModel> groups, String weekStr, bool isPast) {
     if (groups.isEmpty) {
       return Center(
         child: Padding(
@@ -222,7 +249,8 @@ class _WeekGridMobileState extends ConsumerState<WeekGridMobile> {
                 decoration: BoxDecoration(
                   color: AppColors.accent.withValues(alpha: 0.08),
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.accent.withValues(alpha: 0.2)),
+                  border: Border.all(
+                      color: AppColors.accent.withValues(alpha: 0.2)),
                 ),
                 child: const Icon(
                   Icons.calendar_view_week_rounded,
@@ -244,17 +272,23 @@ class _WeekGridMobileState extends ConsumerState<WeekGridMobile> {
               Text(
                 'Tạo nhóm đầu tiên (như Công việc, Học tập, Dự án...) để bắt đầu lên kế hoạch tuần này.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: context.appTextMutedColor, fontSize: 13, height: 1.5),
+                style: TextStyle(
+                    color: context.appTextMutedColor,
+                    fontSize: 13,
+                    height: 1.5),
               ),
               const SizedBox(height: 24),
               FilledButton.icon(
                 onPressed: widget.onAddGroup,
                 icon: const Icon(Icons.add_rounded, size: 18),
-                label: const Text('Tạo nhóm đầu tiên', style: TextStyle(fontWeight: FontWeight.w600)),
+                label: const Text('Tạo nhóm đầu tiên',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.accent,
-                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
                 ),
               ),
             ],
@@ -263,16 +297,32 @@ class _WeekGridMobileState extends ConsumerState<WeekGridMobile> {
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-      itemCount: groups.length,
-      itemBuilder: (context, index) {
-        final group = groups[index];
-        return GoalCard(
-          key: ValueKey('${group.id}-$weekStr'),
-          group: group,
-          weekStartDate: weekStr,
-          isPast: isPast,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final textScale = MediaQuery.textScalerOf(context).scale(14) / 14;
+        final columns = textScale > 1.6
+            ? 1
+            : ((constraints.maxWidth - 20) / 150).floor().clamp(1, 4);
+        return GridView.builder(
+          key: PageStorageKey('groups-$weekStr'),
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            mainAxisExtent: 340 * textScale.clamp(1.0, 2.0),
+          ),
+          itemCount: groups.length,
+          itemBuilder: (context, index) {
+            final group = groups[index];
+            return GoalCard(
+              key: ValueKey('${group.id}-$weekStr'),
+              group: group,
+              weekStartDate: weekStr,
+              isPast: isPast,
+              compact: true,
+            );
+          },
         );
       },
     );

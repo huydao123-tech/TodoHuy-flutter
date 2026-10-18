@@ -15,12 +15,14 @@ class GoalCard extends ConsumerStatefulWidget {
   final TaskGroupModel group;
   final String weekStartDate;
   final bool isPast; // disable add/edit for past weeks
+  final bool compact;
 
   const GoalCard({
     super.key,
     required this.group,
     required this.weekStartDate,
     this.isPast = false,
+    this.compact = false,
   });
 
   @override
@@ -31,6 +33,7 @@ class _GoalCardState extends ConsumerState<GoalCard> {
   final _addController = TextEditingController();
   final _addFocusNode = FocusNode();
   final _addFieldKey = GlobalKey();
+  final _itemsScrollController = ScrollController();
   bool _isAddingTask = false;
 
   Color get _groupColor {
@@ -56,18 +59,23 @@ class _GoalCardState extends ConsumerState<GoalCard> {
   Widget _statusIcon(WorkItemStatus status) {
     switch (status) {
       case WorkItemStatus.TODO:
-        return const Icon(Icons.radio_button_unchecked, color: AppColors.textFaint, size: 22);
+        return const Icon(Icons.radio_button_unchecked,
+            color: AppColors.textFaint, size: 22);
       case WorkItemStatus.IN_PROGRESS:
-        return Icon(Icons.hourglass_top_rounded, color: AppColors.groupColors[2], size: 22);
+        return Icon(Icons.hourglass_top_rounded,
+            color: AppColors.groupColors[2], size: 22);
       case WorkItemStatus.DONE:
-        return const Icon(Icons.check_circle, color: AppColors.accent, size: 22);
+        return const Icon(Icons.check_circle,
+            color: AppColors.accent, size: 22);
     }
   }
 
   Future<void> _cycleStatus(String userId, WorkItemModel item) async {
     HapticFeedback.lightImpact();
     final next = _nextStatus(item.status);
-    await ref.read(plannerRepositoryProvider).updateWorkItemStatus(userId, item.id, next);
+    await ref
+        .read(plannerRepositoryProvider)
+        .updateWorkItemStatus(userId, item.id, next);
   }
 
   // DONE → TODO requires a long-press to avoid accidental un-completion.
@@ -91,16 +99,17 @@ class _GoalCardState extends ConsumerState<GoalCard> {
     }
   }
 
-  Future<void> _quickMoveToCurrentWeek(String userId, WorkItemModel item) async {
+  Future<void> _quickMoveToCurrentWeek(
+      String userId, WorkItemModel item) async {
     HapticFeedback.lightImpact();
     final currentWeekStr = WeekHelper.toWeekStartStr(DateTime.now());
     final oldWeek = item.weekStartDate;
     try {
       await ref.read(plannerRepositoryProvider).moveWorkItemToWeek(
-        userId,
-        item.id,
-        currentWeekStr,
-      );
+            userId,
+            item.id,
+            currentWeekStr,
+          );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -109,10 +118,10 @@ class _GoalCardState extends ConsumerState<GoalCard> {
               label: 'Hoàn tác',
               onPressed: () async {
                 await ref.read(plannerRepositoryProvider).moveWorkItemToWeek(
-                  userId,
-                  item.id,
-                  oldWeek,
-                );
+                      userId,
+                      item.id,
+                      oldWeek,
+                    );
               },
             ),
             duration: const Duration(seconds: 4),
@@ -174,12 +183,15 @@ class _GoalCardState extends ConsumerState<GoalCard> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Xóa nhóm công việc?', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
-        content: Text('Nhóm "${widget.group.name}" sẽ được chuyển vào thùng rác.'),
+        title: const Text('Xóa nhóm công việc?',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+        content:
+            Text('Nhóm "${widget.group.name}" sẽ được chuyển vào thùng rác.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Hủy', style: TextStyle(color: AppColors.textMuted)),
+            child:
+                const Text('Hủy', style: TextStyle(color: AppColors.textMuted)),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -193,7 +205,9 @@ class _GoalCardState extends ConsumerState<GoalCard> {
     if (confirm == true && mounted) {
       final user = ref.read(authRepositoryProvider).currentUser;
       if (user != null) {
-        await ref.read(taskGroupRepositoryProvider).archiveTaskGroup(user.uid, widget.group.id);
+        await ref
+            .read(taskGroupRepositoryProvider)
+            .archiveTaskGroup(user.uid, widget.group.id);
       }
     }
   }
@@ -202,6 +216,7 @@ class _GoalCardState extends ConsumerState<GoalCard> {
   void dispose() {
     _addController.dispose();
     _addFocusNode.dispose();
+    _itemsScrollController.dispose();
     super.dispose();
   }
 
@@ -211,13 +226,33 @@ class _GoalCardState extends ConsumerState<GoalCard> {
     if (user == null) return const SizedBox.shrink();
 
     // Shared work items stream for this week
-    final itemsAsync = ref.watch(workItemsForWeekProvider(widget.weekStartDate));
+    final itemsAsync =
+        ref.watch(workItemsForWeekProvider(widget.weekStartDate));
     final allItems = itemsAsync.valueOrNull ?? const <WorkItemModel>[];
-    final groupItems = allItems.where((i) => i.taskGroupId == widget.group.id).toList();
-    final incompleteCount = groupItems.where((i) => i.status != WorkItemStatus.DONE).length;
+    final groupItems =
+        allItems.where((i) => i.taskGroupId == widget.group.id).toList();
+    final incompleteCount =
+        groupItems.where((i) => i.status != WorkItemStatus.DONE).length;
+
+    final itemsList = itemsAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.all(20),
+        child: Center(
+            child: CircularProgressIndicator(
+                strokeWidth: 2, color: AppColors.accent)),
+      ),
+      error: (err, _) => SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text('Lỗi: $err', style: const TextStyle(color: Colors.red)),
+        ),
+      ),
+      data: (_) => _buildItemsList(user.uid, groupItems),
+    );
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin:
+          widget.compact ? EdgeInsets.zero : const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: context.cardBgColor,
         borderRadius: BorderRadius.circular(16),
@@ -228,28 +263,70 @@ class _GoalCardState extends ConsumerState<GoalCard> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // ─── Card Header ───────────────────────────────────────────
-          _buildHeader(incompleteCount, groupItems.length),
+          if (widget.compact)
+            _buildCompactHeader(incompleteCount, groupItems.length)
+          else
+            _buildHeader(incompleteCount, groupItems.length),
 
           Divider(height: 1, color: context.appBorderColor),
 
           // ─── Work Items List ────────────────────────────────────────
-          itemsAsync.when(
-            loading: () => const Padding(
-              padding: EdgeInsets.all(20),
-              child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent)),
-            ),
-            error: (err, _) => Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text('Lỗi: $err', style: const TextStyle(color: Colors.red)),
-            ),
-            data: (items) {
-              final currentGroupItems = items.where((i) => i.taskGroupId == widget.group.id).toList();
-              return _buildItemsList(user.uid, currentGroupItems);
-            },
-          ),
+          if (widget.compact) Expanded(child: itemsList) else itemsList,
 
           // ─── Add task input (disabled for past weeks) ───────────────
           if (!widget.isPast) _buildAddTaskRow(user.uid),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactHeader(int incompleteCount, int totalCount) {
+    final l10n = context.l10n;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(10, 10, 4, 4),
+      decoration: BoxDecoration(
+        color: _groupColor.withValues(alpha: 0.06),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Tooltip(
+            message: widget.group.name,
+            child: Text(
+              widget.group.name,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  color: _groupColor),
+            ),
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  widget.isPast
+                      ? (l10n.isVietnamese ? 'Tuần cũ' : 'Past week')
+                      : (l10n.isVietnamese
+                          ? '$incompleteCount/$totalCount còn lại'
+                          : '$incompleteCount/$totalCount left'),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style:
+                      TextStyle(fontSize: 11, color: context.appTextMutedColor),
+                ),
+              ),
+              if (!widget.isPast)
+                IconButton(
+                  icon:
+                      Icon(Icons.delete_outline, color: _groupColor, size: 20),
+                  tooltip: l10n.isVietnamese ? 'Xóa nhóm' : 'Delete group',
+                  onPressed: () => _deleteTaskGroup(context),
+                ),
+            ],
+          ),
         ],
       ),
     );
@@ -299,7 +376,11 @@ class _GoalCardState extends ConsumerState<GoalCard> {
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: context.appBorderColor),
               ),
-              child: Text('Tuần cũ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: context.appTextMutedColor)),
+              child: Text('Tuần cũ',
+                  style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: context.appTextMutedColor)),
             )
           else ...[
             if (totalCount > 0)
@@ -308,20 +389,23 @@ class _GoalCardState extends ConsumerState<GoalCard> {
                 decoration: BoxDecoration(
                   color: context.subtleBgColor,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: context.appBorderColor.withValues(alpha: 0.6)),
+                  border: Border.all(
+                      color: context.appBorderColor.withValues(alpha: 0.6)),
                 ),
                 child: Text(
                   incompleteCount == 0 ? '✓ Xong' : '$incompleteCount còn lại',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: incompleteCount == 0 ? AppColors.accent : _groupColor,
+                    color:
+                        incompleteCount == 0 ? AppColors.accent : _groupColor,
                   ),
                 ),
               ),
             const SizedBox(width: 4),
             IconButton(
-              icon: const Icon(Icons.add_rounded, size: 20, color: AppColors.accent),
+              icon: const Icon(Icons.add_rounded,
+                  size: 20, color: AppColors.accent),
               tooltip: 'Thêm công việc',
               visualDensity: VisualDensity.compact,
               style: IconButton.styleFrom(
@@ -332,7 +416,8 @@ class _GoalCardState extends ConsumerState<GoalCard> {
               onPressed: _focusAddField,
             ),
             IconButton(
-              icon: Icon(Icons.delete_outline, color: _groupColor.withValues(alpha: 0.7), size: 20),
+              icon: Icon(Icons.delete_outline,
+                  color: _groupColor.withValues(alpha: 0.7), size: 20),
               tooltip: 'Xóa nhóm',
               visualDensity: VisualDensity.compact,
               onPressed: () => _deleteTaskGroup(context),
@@ -348,18 +433,28 @@ class _GoalCardState extends ConsumerState<GoalCard> {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: Text(
-          widget.isPast ? 'Không có công việc nào.' : 'Chưa có công việc nào. Thêm công việc bên dưới...',
-          style: const TextStyle(color: AppColors.textFaint, fontSize: 13, fontStyle: FontStyle.italic),
+          widget.isPast
+              ? 'Không có công việc nào.'
+              : 'Chưa có công việc nào. Thêm công việc bên dưới...',
+          style: const TextStyle(
+              color: AppColors.textFaint,
+              fontSize: 13,
+              fontStyle: FontStyle.italic),
         ),
       );
     }
 
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+    final list = ListView.separated(
+      controller: widget.compact ? _itemsScrollController : null,
+      primary: false,
+      shrinkWrap: !widget.compact,
+      physics: widget.compact ? null : const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(vertical: 4),
       itemCount: items.length,
-      separatorBuilder: (_, __) => Divider(height: 1, indent: 48, color: context.appBorderColor.withValues(alpha: 0.6)),
+      separatorBuilder: (_, __) => Divider(
+          height: 1,
+          indent: 48,
+          color: context.appBorderColor.withValues(alpha: 0.6)),
       itemBuilder: (context, idx) {
         final item = items[idx];
         final isDone = item.status == WorkItemStatus.DONE;
@@ -367,24 +462,32 @@ class _GoalCardState extends ConsumerState<GoalCard> {
           onTap: () => _openDetailSheet(context, item),
           splashColor: AppColors.accent.withValues(alpha: 0.06),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: EdgeInsets.symmetric(
+                horizontal: widget.compact ? 8 : 14, vertical: 10),
             child: Row(
               children: [
                 // Status cycle button
                 GestureDetector(
-                  onTap: widget.isPast ? null : () => _onStatusTap(userId, item),
-                  onLongPress: widget.isPast ? null : () => _onStatusLongPress(userId, item),
+                  onTap:
+                      widget.isPast ? null : () => _onStatusTap(userId, item),
+                  onLongPress: widget.isPast
+                      ? null
+                      : () => _onStatusLongPress(userId, item),
                   child: _statusIcon(item.status),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: widget.compact ? 6 : 12),
                 // Content
                 Expanded(
                   child: Text(
                     item.content,
+                    maxLines: widget.compact ? 3 : null,
+                    overflow: widget.compact ? TextOverflow.ellipsis : null,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: isDone ? FontWeight.normal : FontWeight.w500,
-                      color: isDone ? context.appTextMutedColor : context.appTextColor,
+                      color: isDone
+                          ? context.appTextMutedColor
+                          : context.appTextColor,
                       decoration: isDone ? TextDecoration.lineThrough : null,
                       decorationColor: context.appTextMutedColor,
                       height: 1.3,
@@ -395,11 +498,13 @@ class _GoalCardState extends ConsumerState<GoalCard> {
                 if (item.note.isNotEmpty)
                   const Padding(
                     padding: EdgeInsets.only(left: 6),
-                    child: Icon(Icons.sticky_note_2_outlined, size: 15, color: AppColors.textFaint),
+                    child: Icon(Icons.sticky_note_2_outlined,
+                        size: 15, color: AppColors.textFaint),
                   ),
                 if (widget.isPast && !isDone)
                   IconButton(
-                    icon: const Icon(Icons.redo_rounded, size: 18, color: AppColors.accent),
+                    icon: const Icon(Icons.redo_rounded,
+                        size: 18, color: AppColors.accent),
                     tooltip: context.l10n.moveToCurrentWeek,
                     visualDensity: VisualDensity.compact,
                     style: IconButton.styleFrom(
@@ -408,9 +513,10 @@ class _GoalCardState extends ConsumerState<GoalCard> {
                     ),
                     onPressed: () => _quickMoveToCurrentWeek(userId, item),
                   )
-                else ...[
+                else if (!widget.compact) ...[
                   const SizedBox(width: 4),
-                  const Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.textFaint),
+                  const Icon(Icons.chevron_right_rounded,
+                      size: 18, color: AppColors.textFaint),
                 ],
               ],
             ),
@@ -418,18 +524,25 @@ class _GoalCardState extends ConsumerState<GoalCard> {
         );
       },
     );
+    return widget.compact
+        ? Scrollbar(controller: _itemsScrollController, child: list)
+        : list;
   }
 
   Widget _buildAddTaskRow(String userId) {
     return Container(
       decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: context.appBorderColor, width: 0.8)),
+        border:
+            Border(top: BorderSide(color: context.appBorderColor, width: 0.8)),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      padding: EdgeInsets.symmetric(
+          horizontal: widget.compact ? 8 : 14, vertical: 6),
       child: Row(
         children: [
-          const Icon(Icons.add_rounded, size: 20, color: AppColors.textFaint),
-          const SizedBox(width: 10),
+          if (!widget.compact) ...[
+            const Icon(Icons.add_rounded, size: 20, color: AppColors.textFaint),
+            const SizedBox(width: 10),
+          ],
           Expanded(
             child: TextField(
               key: _addFieldKey,
@@ -438,7 +551,8 @@ class _GoalCardState extends ConsumerState<GoalCard> {
               style: TextStyle(fontSize: 14, color: context.appTextColor),
               decoration: const InputDecoration(
                 hintText: 'Thêm công việc...',
-                hintStyle: TextStyle(color: AppColors.textFaint, fontSize: 13.5),
+                hintStyle:
+                    TextStyle(color: AppColors.textFaint, fontSize: 13.5),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
@@ -451,10 +565,15 @@ class _GoalCardState extends ConsumerState<GoalCard> {
             ),
           ),
           if (_isAddingTask)
-            const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent))
+            const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: AppColors.accent))
           else
             IconButton(
-              icon: const Icon(Icons.arrow_upward_rounded, size: 18, color: AppColors.accent),
+              icon: const Icon(Icons.arrow_upward_rounded,
+                  size: 18, color: AppColors.accent),
               tooltip: 'Thêm',
               visualDensity: VisualDensity.compact,
               style: IconButton.styleFrom(
